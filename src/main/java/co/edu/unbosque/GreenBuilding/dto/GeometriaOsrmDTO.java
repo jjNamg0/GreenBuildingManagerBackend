@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,7 +21,11 @@ public class GeometriaOsrmDTO {
 	 * @param coordinates Puntos de la ruta, cada uno como [longitud, latitud].
 	 */
 	public GeometriaOsrmDTO(List<double[]> coordinates) {
-		this.coordinates = coordinates;
+		if (coordinates == null) {
+			this.coordinates = null;
+		} else {
+			this.coordinates = new ArrayList<>(coordinates);
+		}
 	}
 
 	/**
@@ -38,7 +43,11 @@ public class GeometriaOsrmDTO {
 	 * @param coordinates Puntos de la ruta, cada uno como [longitud, latitud]
 	 */
 	public void setCoordinates(List<double[]> coordinates) {
-		this.coordinates = coordinates;
+		if (coordinates == null) {
+			this.coordinates = null;
+		} else {
+			this.coordinates = new ArrayList<>(coordinates);
+		}
 	}
 
 	/**

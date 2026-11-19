@@ -4,6 +4,7 @@ import co.edu.unbosque.GreenBuilding.dto.UnidadDTO;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
+import co.edu.unbosque.GreenBuilding.service.ConjuntoService;
 import co.edu.unbosque.GreenBuilding.service.UnidadService;
 import co.edu.unbosque.GreenBuilding.util.ExceptionChecker;
 import io.swagger.v3.oas.annotations.Operation;
@@ -49,6 +50,9 @@ public class UnidadController {
 
 	/** Servicio para operaciones relacionadas con unidades. */
 	@Autowired private UnidadService unidadServ;
+
+	/** Servicio para consultar si existe un conjunto. */
+	@Autowired private ConjuntoService conjuntoServ;
 
 	/** Constructor por defecto. */
 	public UnidadController() {}
@@ -215,10 +219,11 @@ public class UnidadController {
 	ResponseEntity<List<UnidadDTO>> getByConjunto(
 			@Parameter(description = "ID del conjunto", required = true, example = "1") @PathVariable
 					Long conjuntoId) {
-		List<UnidadDTO> unidades = unidadServ.getByConjunto(conjuntoId);
-		if (unidades == null) {
+		if (!conjuntoServ.exist(conjuntoId)) {
 			return new ResponseEntity<>(List.of(), HttpStatus.NOT_FOUND);
-		} else if (unidades.isEmpty()) {
+		}
+		List<UnidadDTO> unidades = unidadServ.getByConjunto(conjuntoId);
+		if (unidades.isEmpty()) {
 			return new ResponseEntity<>(unidades, HttpStatus.NO_CONTENT);
 		} else {
 			return new ResponseEntity<>(unidades, HttpStatus.ACCEPTED);

@@ -286,13 +286,32 @@ public class RegistroAuditoriaDTO {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		RegistroAuditoriaDTO other = (RegistroAuditoriaDTO) obj;
+		return mismosDatosPrincipales(other) && mismosDatosAdicionales(other);
+	}
+
+	/**
+	 * Compara la primera mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosPrincipales(RegistroAuditoriaDTO other) {
 		return Objects.equals(id, other.id)
 				&& Objects.equals(username, other.username)
 				&& Objects.equals(nombreUsuario, other.nombreUsuario)
 				&& Objects.equals(role, other.role)
 				&& Objects.equals(fecha, other.fecha)
-				&& Objects.equals(accion, other.accion)
-				&& Objects.equals(entidad, other.entidad)
+				&& Objects.equals(accion, other.accion);
+	}
+
+	/**
+	 * Compara la segunda mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosAdicionales(RegistroAuditoriaDTO other) {
+		return Objects.equals(entidad, other.entidad)
 				&& Objects.equals(motivo, other.motivo)
 				&& Objects.equals(ubicacion, other.ubicacion)
 				&& Objects.equals(latitud, other.latitud)

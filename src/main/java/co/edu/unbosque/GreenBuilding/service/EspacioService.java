@@ -111,12 +111,12 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 	 * Obtiene los espacios de un conjunto ordenados por nombre.
 	 *
 	 * @param conjuntoId ID del conjunto
-	 * @return Lista de DTOs de espacios, o null si el conjunto no existe
+	 * @return Lista de DTOs de espacios, vacía si el conjunto no existe
 	 */
 	public List<EspacioDTO> getByConjunto(Long conjuntoId) {
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(conjuntoId);
 		if (!conjunto.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		List<EspacioDTO> dtoList = new ArrayList<>();
 		espacioRepo

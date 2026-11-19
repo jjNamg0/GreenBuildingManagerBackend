@@ -130,7 +130,7 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * Obtiene los eventos de un conjunto, o todos si no se indica conjunto.
 	 *
 	 * @param conjuntoId ID del conjunto (opcional)
-	 * @return Lista de DTOs de eventos, o null si el conjunto no existe
+	 * @return Lista de DTOs de eventos, vacía si el conjunto no existe
 	 */
 	public List<EventoDTO> getAll(Long conjuntoId) {
 		if (conjuntoId == null) {
@@ -138,7 +138,7 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		}
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(conjuntoId);
 		if (!conjunto.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		return aDTOs(eventoRepo.findByConjuntoIdOrderByFechaDescHoraInicioDesc(conjuntoId), null);
 	}
@@ -151,12 +151,12 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * @param conjuntoId ID del conjunto
 	 * @param tipo Tipo de evento (opcional)
 	 * @param paraNinos true para ver solo planes para niños
-	 * @return Lista de DTOs de eventos, o null si el conjunto no existe
+	 * @return Lista de DTOs de eventos, vacía si el conjunto no existe
 	 */
 	public List<EventoDTO> getByConjunto(String username, Long conjuntoId, Tipo tipo, boolean paraNinos) {
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(conjuntoId);
 		if (!conjunto.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		Usuario usuario = null;
 		Optional<Usuario> encontrado = usuarioRepo.findByUsername(username);

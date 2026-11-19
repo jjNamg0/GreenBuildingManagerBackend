@@ -1,6 +1,7 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
 import co.edu.unbosque.GreenBuilding.model.Unidad.Tipo;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -171,7 +172,11 @@ public class UnidadDTO {
 	 * @param residentes Nombres de los residentes asignados
 	 */
 	public void setResidentes(List<String> residentes) {
-		this.residentes = residentes;
+		if (residentes == null) {
+			this.residentes = null;
+		} else {
+			this.residentes = new ArrayList<>(residentes);
+		}
 	}
 
 	/**

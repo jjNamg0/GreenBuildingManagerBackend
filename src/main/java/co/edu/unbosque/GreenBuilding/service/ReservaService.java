@@ -143,12 +143,12 @@ public class ReservaService {
 	 *
 	 * @param espacioId ID del espacio
 	 * @param fecha Fecha AAAA-MM-DD
-	 * @return Lista de franjas, vacía si el espacio es de uso libre, o null si el espacio no existe
+	 * @return Lista de franjas, vacía si el espacio es de uso libre o no existe
 	 */
 	public List<FranjaHorariaDTO> getDisponibilidad(Long espacioId, String fecha) {
 		Optional<Espacio> found = espacioRepo.findById(espacioId);
 		if (!found.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		Espacio espacio = found.get();
 		List<FranjaHorariaDTO> franjas = new ArrayList<>();

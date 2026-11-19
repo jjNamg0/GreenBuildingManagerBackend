@@ -6,6 +6,7 @@ import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
 import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
+import co.edu.unbosque.GreenBuilding.service.ConjuntoService;
 import co.edu.unbosque.GreenBuilding.service.EspacioService;
 import co.edu.unbosque.GreenBuilding.util.ExceptionChecker;
 import io.swagger.v3.oas.annotations.Operation;
@@ -50,11 +51,11 @@ import org.springframework.web.bind.annotation.RestController;
 @SecurityRequirement(name = "bearerAuth")
 public class EspacioController {
 
-	/** Mensaje cuando un residente pide información de otro conjunto. */
-	private static final String SIN_ACCESO = "Solo puedes ver la información de tu conjunto.";
-
 	/** Servicio para operaciones relacionadas con espacios. */
 	@Autowired private EspacioService espacioServ;
+
+	/** Servicio para consultar si existe un conjunto. */
+	@Autowired private ConjuntoService conjuntoServ;
 
 	/** Constructor por defecto. */
 	public EspacioController() {}
@@ -176,10 +177,11 @@ public class EspacioController {
 		if (!espacioServ.puedeVerConjunto(SecurityContextHolder.getContext().getAuthentication().getName(), conjuntoId)) {
 			return new ResponseEntity<>(List.of(), HttpStatus.FORBIDDEN);
 		}
-		List<EspacioDTO> espacios = espacioServ.getByConjunto(conjuntoId);
-		if (espacios == null) {
+		if (!conjuntoServ.exist(conjuntoId)) {
 			return new ResponseEntity<>(List.of(), HttpStatus.NOT_FOUND);
-		} else if (espacios.isEmpty()) {
+		}
+		List<EspacioDTO> espacios = espacioServ.getByConjunto(conjuntoId);
+		if (espacios.isEmpty()) {
 			return new ResponseEntity<>(espacios, HttpStatus.NO_CONTENT);
 		} else {
 			return new ResponseEntity<>(espacios, HttpStatus.ACCEPTED);

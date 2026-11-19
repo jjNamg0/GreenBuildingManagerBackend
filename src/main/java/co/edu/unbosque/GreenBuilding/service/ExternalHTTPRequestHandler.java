@@ -10,6 +10,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -141,12 +142,12 @@ public class ExternalHTTPRequestHandler {
 	 * @param url URL a consultar
 	 * @param tipo Clase del DTO al que se convierte la respuesta
 	 * @param <T> Tipo del DTO
-	 * @return Lista con el DTO de la respuesta, o null si la petición falló
+	 * @return Lista con el DTO de la respuesta, vacía si la petición falló
 	 */
 	public static <T> List<T> doGetAndConvertToDtoList(String url, Class<T> tipo) {
 		T dto = doGetAndConvertToDto(url, tipo);
 		if (dto == null) {
-			return null;
+			return new ArrayList<>();
 		}
 		return Arrays.asList(dto);
 	}

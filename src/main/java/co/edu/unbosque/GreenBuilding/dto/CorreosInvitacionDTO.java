@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -23,7 +24,11 @@ public class CorreosInvitacionDTO {
 	 * @param correos Correos de los invitados.
 	 */
 	public CorreosInvitacionDTO(List<String> correos) {
-		this.correos = correos;
+		if (correos == null) {
+			this.correos = null;
+		} else {
+			this.correos = new ArrayList<>(correos);
+		}
 	}
 
 	/**
@@ -41,7 +46,11 @@ public class CorreosInvitacionDTO {
 	 * @param correos Correos de los invitados
 	 */
 	public void setCorreos(List<String> correos) {
-		this.correos = correos;
+		if (correos == null) {
+			this.correos = null;
+		} else {
+			this.correos = new ArrayList<>(correos);
+		}
 	}
 
 	/**

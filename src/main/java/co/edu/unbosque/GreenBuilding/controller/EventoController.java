@@ -9,6 +9,7 @@ import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
 import co.edu.unbosque.GreenBuilding.model.Evento.Tipo;
+import co.edu.unbosque.GreenBuilding.service.ConjuntoService;
 import co.edu.unbosque.GreenBuilding.service.EspacioService;
 import co.edu.unbosque.GreenBuilding.service.EventoService;
 import co.edu.unbosque.GreenBuilding.util.ExceptionChecker;
@@ -60,6 +61,9 @@ public class EventoController {
 
 	/** Servicio de espacios, para revisar el acceso al conjunto. */
 	@Autowired private EspacioService espacioServ;
+
+	/** Servicio para consultar si existe un conjunto. */
+	@Autowired private ConjuntoService conjuntoServ;
 
 	/** Constructor por defecto. */
 	public EventoController() {}
@@ -187,10 +191,11 @@ public class EventoController {
 		if (!espacioServ.puedeVerConjunto(SecurityContextHolder.getContext().getAuthentication().getName(), id)) {
 			return new ResponseEntity<>(List.of(), HttpStatus.FORBIDDEN);
 		}
-		List<EventoDTO> eventos = eventoServ.getByConjunto(SecurityContextHolder.getContext().getAuthentication().getName(), id, tipo, paraNinos);
-		if (eventos == null) {
+		if (!conjuntoServ.exist(id)) {
 			return new ResponseEntity<>(List.of(), HttpStatus.NOT_FOUND);
-		} else if (eventos.isEmpty()) {
+		}
+		List<EventoDTO> eventos = eventoServ.getByConjunto(SecurityContextHolder.getContext().getAuthentication().getName(), id, tipo, paraNinos);
+		if (eventos.isEmpty()) {
 			return new ResponseEntity<>(eventos, HttpStatus.NO_CONTENT);
 		} else {
 			return new ResponseEntity<>(eventos, HttpStatus.ACCEPTED);
@@ -229,10 +234,11 @@ public class EventoController {
 	ResponseEntity<List<EventoDTO>> getAll(
 			@Parameter(description = "ID del conjunto", example = "1") @RequestParam(required = false)
 					Long conjuntoId) {
-		List<EventoDTO> eventos = eventoServ.getAll(conjuntoId);
-		if (eventos == null) {
+		if (conjuntoId != null && !conjuntoServ.exist(conjuntoId)) {
 			return new ResponseEntity<>(List.of(), HttpStatus.NOT_FOUND);
-		} else if (eventos.isEmpty()) {
+		}
+		List<EventoDTO> eventos = eventoServ.getAll(conjuntoId);
+		if (eventos.isEmpty()) {
 			return new ResponseEntity<>(eventos, HttpStatus.NO_CONTENT);
 		} else {
 			return new ResponseEntity<>(eventos, HttpStatus.ACCEPTED);
