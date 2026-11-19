@@ -7,9 +7,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementación del servicio UserDetailsService de Spring Security. Esta clase
- * se encarga de cargar los detalles del usuario desde la base de datos para la
- * autenticación.
+ * Implementación del servicio UserDetailsService de Spring Security. Esta clase se encarga de
+ * cargar los detalles del usuario desde la base de datos para la autenticación.
  */
 @Service
 public class UserDetailsServiceImpl implements UserDetailsService {
@@ -35,7 +34,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 	 */
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		return usuarioRepository.findByUsername(username)
-				.orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
+		return usuarioRepository
+				.findByUsername(username)
+				.orElseThrow(
+						() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 	}
 }

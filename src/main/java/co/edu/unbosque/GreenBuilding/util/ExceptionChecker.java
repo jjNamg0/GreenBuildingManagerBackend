@@ -9,12 +9,13 @@ import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.PasswordNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
+import java.util.List;
 
 /**
  * Clase de utilidad que revisa los datos que llegan a los controladores y lanza la excepción
  * correspondiente cuando un dato no es válido.
  *
- * @author Juan Arango
+ * @author Daniel M
  * @version 1.0
  */
 public class ExceptionChecker {
@@ -34,6 +35,9 @@ public class ExceptionChecker {
 	/** Patrón de una fecha con formato AAAA-MM-DD. */
 	private static final String PATRON_FECHA =
 			"^\\d{4}-\\d{2}-\\d{2}$";
+
+	/** Número máximo de correos por envío de invitaciones. */
+	public static final int MAX_CORREOS_INVITACION = 30;
 
 	/** Constructor privado: esta clase solo tiene métodos estáticos. */
 	private ExceptionChecker() {}
@@ -70,7 +74,7 @@ public class ExceptionChecker {
 	 * @throws EmptyFieldException si el campo está vacío
 	 */
 	public static void checkEmpty(String campo, String valor) throws EmptyFieldException {
-		if (valor == null || valor.isBlank()) {
+		if (valor == null || valor.trim().isEmpty()) {
 			throw new EmptyFieldException(campo);
 		}
 	}
@@ -109,7 +113,7 @@ public class ExceptionChecker {
 	public static void checkTimeRange(String inicio, String fin) throws TimeNotValidException {
 		checkTime(inicio);
 		checkTime(fin);
-		if (inicio.compareTo(fin) >= 0) {
+		if (!FechaUtil.leerHora(inicio).isBefore(FechaUtil.leerHora(fin))) {
 			throw new TimeNotValidException("La hora de inicio debe ser antes de la hora de fin.");
 		}
 	}
@@ -201,8 +205,37 @@ public class ExceptionChecker {
 	 */
 	public static void checkCoordinates(double latitud, double longitud)
 			throws CoordinateNotValidException {
-		if (Math.abs(latitud) > 90 || Math.abs(longitud) > 180) {
+		if (latitud < -90 || latitud > 90 || longitud < -180 || longitud > 180) {
 			throw new CoordinateNotValidException();
+		}
+	}
+
+	/**
+	 * Revisa la lista de correos de una invitación: que tenga al menos uno, que no pase del máximo y
+	 * que todos tengan un formato válido.
+	 *
+	 * @param correos Correos a revisar
+	 * @throws EmailNotValidException si la lista está vacía, es muy larga o tiene correos inválidos
+	 */
+	public static void checkEmails(List<String> correos) throws EmailNotValidException {
+		if (correos == null || correos.isEmpty()) {
+			throw new EmailNotValidException("Escribe al menos un correo.");
+		}
+		if (correos.size() > MAX_CORREOS_INVITACION) {
+			throw new EmailNotValidException(
+					"Puedes invitar hasta " + MAX_CORREOS_INVITACION + " correos por envío.");
+		}
+		String invalidos = "";
+		for (String correo : correos) {
+			if (correo == null || !correo.trim().matches(PATRON_CORREO)) {
+				if (!invalidos.isEmpty()) {
+					invalidos = invalidos + ", ";
+				}
+				invalidos = invalidos + correo;
+			}
+		}
+		if (!invalidos.isEmpty()) {
+			throw new EmailNotValidException("Estos correos no son válidos: " + invalidos);
 		}
 	}
 }
