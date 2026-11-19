@@ -4,6 +4,7 @@ import co.edu.unbosque.GreenBuilding.dto.EspacioDTO;
 import co.edu.unbosque.GreenBuilding.model.Conjunto;
 import co.edu.unbosque.GreenBuilding.model.Espacio;
 import co.edu.unbosque.GreenBuilding.model.Evento;
+import co.edu.unbosque.GreenBuilding.model.Reserva;
 import co.edu.unbosque.GreenBuilding.model.Usuario;
 import co.edu.unbosque.GreenBuilding.model.Usuario.Role;
 import co.edu.unbosque.GreenBuilding.repository.ConjuntoRepository;
@@ -21,43 +22,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que proporciona operaciones CRUD para los espacios comunes de los
- * conjuntos. Implementa la interfaz CRUDOperation.
+ * Servicio que proporciona operaciones CRUD para los espacios comunes de los conjuntos.
+ * Implementa la interfaz CRUDOperation.
  */
 @Service
 public class EspacioService implements CRUDOperation<EspacioDTO> {
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired
-	private EspacioRepository espacioRepo;
+	@Autowired private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired
-	private ConjuntoRepository conjuntoRepo;
+	@Autowired private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired
-	private ReservaRepository reservaRepo;
+	@Autowired private ReservaRepository reservaRepo;
 
 	/** Repositorio para acceder a los eventos. */
-	@Autowired
-	private EventoRepository eventoRepo;
+	@Autowired private EventoRepository eventoRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Mapeador para convertir entre entidades y DTOs. */
-	@Autowired
-	private ModelMapper modelMapper;
+	@Autowired private ModelMapper modelMapper;
 
 	/** Servicio de auditoría. */
-	@Autowired
-	private AuditoriaService auditoriaServ;
+	@Autowired private AuditoriaService auditoriaServ;
 
 	/** Constructor por defecto. */
-	public EspacioService() {
-	}
+	public EspacioService() {}
 
 	/**
 	 * Cuenta el número total de espacios.
@@ -95,7 +88,9 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 		Espacio entity = new Espacio();
 		aplicar(entity, data, conjunto.get());
 		espacioRepo.save(entity);
-		auditoriaServ.registrar("CREAR", "Espacio",
+		auditoriaServ.registrar(
+				"CREAR",
+				"Espacio",
 				"Creó el espacio " + entity.getNombre() + " en " + conjunto.get().getNombre());
 		return 0;
 	}
@@ -124,13 +119,14 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 			return null;
 		}
 		List<EspacioDTO> dtoList = new ArrayList<>();
-		espacioRepo.findByConjuntoIdOrderByNombreAsc(conjuntoId).forEach((entity) -> dtoList.add(aDTO(entity)));
+		espacioRepo
+				.findByConjuntoIdOrderByNombreAsc(conjuntoId)
+				.forEach((entity) -> dtoList.add(aDTO(entity)));
 		return dtoList;
 	}
 
 	/**
-	 * Elimina un espacio y sus reservas. Los eventos que lo usaban quedan sin
-	 * espacio.
+	 * Elimina un espacio y sus reservas. Los eventos que lo usaban quedan sin espacio.
 	 *
 	 * @param id ID del espacio
 	 * @return 0 si la eliminación fue exitosa, 1 si el espacio no existe
@@ -144,7 +140,9 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 		for (Evento evento : eventoRepo.findByEspacioId(id)) {
 			evento.setEspacioId(null);
 		}
-		reservaRepo.deleteAll(reservaRepo.findByEspacioId(id));
+		for (Reserva reserva : reservaRepo.findByEspacioId(id)) {
+			reservaRepo.delete(reserva);
+		}
 		espacioRepo.delete(found.get());
 		auditoriaServ.registrar("ELIMINAR", "Espacio", "Eliminó el espacio " + found.get().getNombre());
 		return 0;
@@ -153,10 +151,10 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 	/**
 	 * Actualiza un espacio existente.
 	 *
-	 * @param id      ID del espacio
+	 * @param id ID del espacio
 	 * @param newData DTO con los nuevos datos
-	 * @return 0 si la actualización fue exitosa, 2 si el espacio no existe, 3 si el
-	 *         conjunto no existe
+	 * @return 0 si la actualización fue exitosa, 2 si el espacio no existe, 3 si el conjunto no
+	 *     existe
 	 */
 	@Override
 	public int updateById(Long id, EspacioDTO newData) {
@@ -191,10 +189,10 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 	}
 
 	/**
-	 * Indica si un usuario puede ver la información de un conjunto: los
-	 * administradores ven todos y los residentes solo el suyo.
+	 * Indica si un usuario puede ver la información de un conjunto: los administradores ven todos y
+	 * los residentes solo el suyo.
 	 *
-	 * @param username   Correo del usuario
+	 * @param username Correo del usuario
 	 * @param conjuntoId ID del conjunto
 	 * @return true si puede verlo
 	 */
@@ -226,8 +224,8 @@ public class EspacioService implements CRUDOperation<EspacioDTO> {
 	/**
 	 * Copia los datos del DTO en la entidad.
 	 *
-	 * @param entity   Espacio a modificar
-	 * @param data     Datos nuevos
+	 * @param entity Espacio a modificar
+	 * @param data Datos nuevos
 	 * @param conjunto Conjunto del espacio
 	 */
 	private void aplicar(Espacio entity, EspacioDTO data, Conjunto conjunto) {

@@ -5,6 +5,8 @@ import co.edu.unbosque.GreenBuilding.dto.CodigoDTO;
 import co.edu.unbosque.GreenBuilding.dto.UsuarioDTO;
 import co.edu.unbosque.GreenBuilding.model.CodigoVerificacion.Proposito;
 import co.edu.unbosque.GreenBuilding.model.Conjunto;
+import co.edu.unbosque.GreenBuilding.model.Asistencia;
+import co.edu.unbosque.GreenBuilding.model.Reserva;
 import co.edu.unbosque.GreenBuilding.model.Unidad;
 import co.edu.unbosque.GreenBuilding.model.Usuario;
 import co.edu.unbosque.GreenBuilding.model.Usuario.Role;
@@ -23,61 +25,53 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que proporciona operaciones CRUD y funcionalidades adicionales para
- * usuarios: registro, verificación del correo, recuperación de contraseña,
- * perfil, intereses y gestión de residentes. Implementa la interfaz
- * CRUDOperation para operaciones básicas de creación, lectura, actualización y
- * eliminación.
+ * Servicio que proporciona operaciones CRUD y funcionalidades adicionales para usuarios: registro,
+ * verificación del correo, recuperación de contraseña, perfil, intereses y gestión de residentes.
+ * Implementa la interfaz CRUDOperation para operaciones básicas de creación, lectura,
+ * actualización y eliminación.
  */
 @Service
 public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 
 	/** Intereses que puede elegir un residente. */
-	public static final List<String> INTERESES_VALIDOS = List.of("FIESTAS", "NINOS", "DEPORTE", "CULTURA", "ASAMBLEAS",
-			"PISCINA", "GIMNASIO", "BBQ", "NATURALEZA", "MASCOTAS");
+	public static final List<String> INTERESES_VALIDOS =
+			List.of(
+					"FIESTAS", "NINOS", "DEPORTE", "CULTURA", "ASAMBLEAS", "PISCINA", "GIMNASIO", "BBQ",
+					"NATURALEZA", "MASCOTAS");
 
 	/** Filtros válidos para la lista de usuarios. */
-	public static final List<String> FILTROS_VALIDOS = List.of("TODOS", "SIN_UNIDAD", "RESIDENTES", "INACTIVOS");
+	public static final List<String> FILTROS_VALIDOS =
+			List.of("TODOS", "SIN_UNIDAD", "RESIDENTES", "INACTIVOS");
 
 	/** Repositorio para acceder a los datos de usuarios en la base de datos. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired
-	private ConjuntoRepository conjuntoRepo;
+	@Autowired private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a las unidades. */
-	@Autowired
-	private UnidadRepository unidadRepo;
+	@Autowired private UnidadRepository unidadRepo;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired
-	private ReservaRepository reservaRepo;
+	@Autowired private ReservaRepository reservaRepo;
 
 	/** Repositorio para acceder a las asistencias a eventos. */
-	@Autowired
-	private AsistenciaRepository asistenciaRepo;
+	@Autowired private AsistenciaRepository asistenciaRepo;
 
 	/** Mapeador para convertir entre entidades Usuario y DTOs UsuarioDTO. */
-	@Autowired
-	private ModelMapper modelMapper;
+	@Autowired private ModelMapper modelMapper;
 
 	/** Codificador para encriptar contraseñas de usuarios. */
-	@Autowired
-	private PasswordEncoder passwordEncoder;
+	@Autowired private PasswordEncoder passwordEncoder;
 
 	/** Servicio de códigos de verificación. */
-	@Autowired
-	private CodigoVerificacionService codigoServ;
+	@Autowired private CodigoVerificacionService codigoServ;
 
 	/** Servicio de auditoría. */
-	@Autowired
-	private AuditoriaService auditoriaServ;
+	@Autowired private AuditoriaService auditoriaServ;
 
 	/** Constructor por defecto. */
-	public UsuarioService() {
-	}
+	public UsuarioService() {}
 
 	/**
 	 * Cuenta el número total de usuarios en la base de datos.
@@ -101,13 +95,12 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Registra un nuevo residente. Codifica la contraseña, lo deja sin verificar y
-	 * le envía el código de verificación al correo. Siempre se crea con rol USER.
+	 * Registra un nuevo residente. Codifica la contraseña, lo deja sin verificar y le envía el código
+	 * de verificación al correo. Siempre se crea con rol USER.
 	 *
 	 * @param data DTO con los datos del usuario a crear
-	 * @return 0 si el registro fue exitoso, 1 si el correo ya está registrado, 2 si
-	 *         el conjunto no existe, 3 si se registró pero no se pudo enviar el
-	 *         código
+	 * @return 0 si el registro fue exitoso, 1 si el correo ya está registrado, 2 si el conjunto no
+	 *     existe, 3 si se registró pero no se pudo enviar el código
 	 */
 	@Override
 	public int create(UsuarioDTO data) {
@@ -115,8 +108,10 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		if (findUsernameAlreadyTaken(correo)) {
 			return 1;
 		}
-		Optional<Conjunto> conjunto = data.getConjuntoId() == null ? Optional.empty()
-				: conjuntoRepo.findById(data.getConjuntoId());
+		if (data.getConjuntoId() == null) {
+			return 2;
+		}
+		Optional<Conjunto> conjunto = conjuntoRepo.findById(data.getConjuntoId());
 		if (!conjunto.isPresent()) {
 			return 2;
 		}
@@ -127,7 +122,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		entity.setConjuntoId(conjunto.get().getId());
 		entity.setUnidadSolicitada(TextoUtil.limpiar(data.getUnidadSolicitada()));
 		usuarioRepo.save(entity);
-		auditoriaServ.registrar(correo, "REGISTRO", "Usuario", "Registro en " + conjunto.get().getNombre());
+		auditoriaServ.registrar(
+				correo, "REGISTRO", "Usuario", "Registro en " + conjunto.get().getNombre());
 		if (codigoServ.generarYEnviar(entity, Proposito.VERIFICACION) == 0) {
 			return 0;
 		} else {
@@ -144,20 +140,19 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	public List<UsuarioDTO> getAll() {
 		List<Usuario> entityList = usuarioRepo.findAll();
 		List<UsuarioDTO> dtoList = new ArrayList<>();
-		entityList.forEach((entity) -> {
-			UsuarioDTO dto = aDTO(entity);
-			dtoList.add(dto);
-		});
+		entityList.forEach(
+				(entity) -> {
+					UsuarioDTO dto = aDTO(entity);
+					dtoList.add(dto);
+				});
 		return dtoList;
 	}
 
 	/**
-	 * Obtiene los usuarios que cumplen un filtro y una búsqueda, del más reciente
-	 * al más antiguo.
+	 * Obtiene los usuarios que cumplen un filtro y una búsqueda, del más reciente al más antiguo.
 	 *
-	 * @param filtro   TODOS, SIN_UNIDAD, RESIDENTES o INACTIVOS
-	 * @param busqueda Texto a buscar en el nombre, correo o unidad solicitada
-	 *                 (opcional)
+	 * @param filtro TODOS, SIN_UNIDAD, RESIDENTES o INACTIVOS
+	 * @param busqueda Texto a buscar en el nombre, correo o unidad solicitada (opcional)
 	 * @return Lista de DTOs de usuarios
 	 */
 	public List<UsuarioDTO> getAll(String filtro, String busqueda) {
@@ -171,12 +166,11 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Elimina un usuario por su ID, junto con sus reservas, su asistencia a eventos
-	 * y sus códigos. Las cuentas de administrador no se pueden eliminar.
+	 * Elimina un usuario por su ID, junto con sus reservas, su asistencia a eventos y sus códigos.
+	 * Las cuentas de administrador no se pueden eliminar.
 	 *
 	 * @param id ID del usuario a eliminar
-	 * @return 0 si la eliminación fue exitosa, 1 si el usuario no existe, 2 si es
-	 *         administrador
+	 * @return 0 si la eliminación fue exitosa, 1 si el usuario no existe, 2 si es administrador
 	 */
 	@Override
 	public int deleteById(Long id) {
@@ -188,8 +182,12 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		if (usuario.getRole() == Role.ADMIN) {
 			return 2;
 		}
-		asistenciaRepo.deleteAll(asistenciaRepo.findByUsuarioId(id));
-		reservaRepo.deleteAll(reservaRepo.findByUsuarioId(id));
+		for (Asistencia asistencia : asistenciaRepo.findByUsuarioId(id)) {
+			asistenciaRepo.delete(asistencia);
+		}
+		for (Reserva reserva : reservaRepo.findByUsuarioId(id)) {
+			reservaRepo.delete(reserva);
+		}
 		codigoServ.eliminarTodos(usuario.getUsername());
 		usuarioRepo.delete(usuario);
 		auditoriaServ.registrar("ELIMINAR", "Usuario", "Eliminó la cuenta de " + usuario.getUsername());
@@ -199,7 +197,7 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	/**
 	 * Actualiza el nombre, apellido y teléfono de un usuario por su ID.
 	 *
-	 * @param id      ID del usuario a actualizar
+	 * @param id ID del usuario a actualizar
 	 * @param newData DTO con los nuevos datos del usuario
 	 * @return 0 si la actualización fue exitosa, 2 si el usuario no existe
 	 */
@@ -249,11 +247,10 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Actualiza el perfil (nombre, apellido y teléfono) del usuario con la sesión
-	 * iniciada.
+	 * Actualiza el perfil (nombre, apellido y teléfono) del usuario con la sesión iniciada.
 	 *
 	 * @param username Correo del usuario
-	 * @param newData  DTO con los nuevos datos
+	 * @param newData DTO con los nuevos datos
 	 * @return 0 si la actualización fue exitosa, 1 si el usuario no existe
 	 */
 	public int updateMe(String username, UsuarioDTO newData) {
@@ -274,9 +271,9 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	 * Cambia la contraseña del usuario con la sesión iniciada.
 	 *
 	 * @param username Correo del usuario
-	 * @param data     DTO con la contraseña actual y la nueva
-	 * @return 0 si el cambio fue exitoso, 1 si la contraseña actual no es correcta,
-	 *         2 si la nueva es igual a la actual, 3 si el usuario no existe
+	 * @param data DTO con la contraseña actual y la nueva
+	 * @return 0 si el cambio fue exitoso, 1 si la contraseña actual no es correcta, 2 si la nueva es
+	 *     igual a la actual, 3 si el usuario no existe
 	 */
 	public int changePassword(String username, CambioPasswordDTO data) {
 		Optional<Usuario> found = usuarioRepo.findByUsername(username);
@@ -299,10 +296,9 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	/**
 	 * Reemplaza los intereses del usuario con la sesión iniciada.
 	 *
-	 * @param username  Correo del usuario
+	 * @param username Correo del usuario
 	 * @param intereses Lista de intereses
-	 * @return 0 si se guardaron, 1 si algún interés no es válido, 2 si el usuario
-	 *         no existe
+	 * @return 0 si se guardaron, 1 si algún interés no es válido, 2 si el usuario no existe
 	 */
 	public int updateIntereses(String username, List<String> intereses) {
 		List<String> limpios = new ArrayList<>();
@@ -322,7 +318,11 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		Usuario temp = found.get();
 		String guardados = "";
 		for (int i = 0; i < limpios.size(); i++) {
-			guardados = i == 0 ? limpios.get(i) : guardados + "," + limpios.get(i);
+			if (i == 0) {
+				guardados = limpios.get(i);
+			} else {
+				guardados = guardados + "," + limpios.get(i);
+			}
 		}
 		temp.setInteresesGuardados(guardados);
 		usuarioRepo.save(temp);
@@ -333,10 +333,10 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	/**
 	 * Asigna una unidad a un residente. El residente pasa al conjunto de la unidad.
 	 *
-	 * @param id       ID del usuario
+	 * @param id ID del usuario
 	 * @param unidadId ID de la unidad
-	 * @return 0 si la asignación fue exitosa, 1 si el usuario no existe, 2 si la
-	 *         unidad no existe, 3 si el usuario es administrador
+	 * @return 0 si la asignación fue exitosa, 1 si el usuario no existe, 2 si la unidad no existe, 3
+	 *     si el usuario es administrador
 	 */
 	public int asignarUnidad(Long id, Long unidadId) {
 		Optional<Usuario> found = usuarioRepo.findById(id);
@@ -354,7 +354,9 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		temp.setUnidadId(unidad.get().getId());
 		temp.setConjuntoId(unidad.get().getConjuntoId());
 		usuarioRepo.save(temp);
-		auditoriaServ.registrar("ACTUALIZAR", "Usuario",
+		auditoriaServ.registrar(
+				"ACTUALIZAR",
+				"Usuario",
 				"Asignó " + unidad.get().getDescripcion() + " a " + temp.getNombreCompleto());
 		return 0;
 	}
@@ -362,10 +364,10 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	/**
 	 * Activa o desactiva la cuenta de un residente.
 	 *
-	 * @param id     ID del usuario
+	 * @param id ID del usuario
 	 * @param activo true para activar, false para desactivar
-	 * @return 0 si el cambio fue exitoso, 1 si el usuario no existe, 3 si el
-	 *         usuario es administrador
+	 * @return 0 si el cambio fue exitoso, 1 si el usuario no existe, 3 si el usuario es
+	 *     administrador
 	 */
 	public int cambiarEstado(Long id, boolean activo) {
 		Optional<Usuario> found = usuarioRepo.findById(id);
@@ -378,8 +380,14 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		}
 		temp.setActivo(activo);
 		usuarioRepo.save(temp);
-		auditoriaServ.registrar("ACTUALIZAR", "Usuario",
-				(activo ? "Activó" : "Desactivó") + " la cuenta de " + temp.getUsername());
+		String accionCuenta = "Desactivó";
+		if (activo) {
+			accionCuenta = "Activó";
+		}
+		auditoriaServ.registrar(
+				"ACTUALIZAR",
+				"Usuario",
+				accionCuenta + " la cuenta de " + temp.getUsername());
 		return 0;
 	}
 
@@ -387,9 +395,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	 * Verifica el correo de un usuario con el código que se le envió.
 	 *
 	 * @param data DTO con el correo y el código
-	 * @return 0 si la cuenta quedó verificada, 1 si ya estaba verificada, 2 si el
-	 *         código no es correcto, 3 si venció, 4 si superó los intentos, 5 si no
-	 *         tiene un código activo
+	 * @return 0 si la cuenta quedó verificada, 1 si ya estaba verificada, 2 si el código no es
+	 *     correcto, 3 si venció, 4 si superó los intentos, 5 si no tiene un código activo
 	 */
 	public int verificar(CodigoDTO data) {
 		Optional<Usuario> found = usuarioRepo.findByUsername(TextoUtil.correo(data.getUsername()));
@@ -412,13 +419,12 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Reenvía el código de verificación a un usuario que aún no verificó su cuenta.
-	 * Si el correo no está registrado o ya está verificado, no hace nada, para no
-	 * revelar qué correos existen.
+	 * Reenvía el código de verificación a un usuario que aún no verificó su cuenta. Si el correo no
+	 * está registrado o ya está verificado, no hace nada, para no revelar qué correos existen.
 	 *
 	 * @param username Correo del usuario
-	 * @return 0 si se procesó la solicitud, 1 si debe esperar un minuto, 2 si el
-	 *         correo no se pudo enviar
+	 * @return 0 si se procesó la solicitud, 1 si debe esperar un minuto, 2 si el correo no se pudo
+	 *     enviar
 	 */
 	public int reenviarCodigo(String username) {
 		Optional<Usuario> found = usuarioRepo.findByUsername(TextoUtil.correo(username));
@@ -429,13 +435,12 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Envía el código para restablecer la contraseña. Si el correo no está
-	 * registrado o la cuenta está desactivada, no hace nada, para no revelar qué
-	 * correos existen.
+	 * Envía el código para restablecer la contraseña. Si el correo no está registrado o la cuenta
+	 * está desactivada, no hace nada, para no revelar qué correos existen.
 	 *
 	 * @param username Correo del usuario
-	 * @return 0 si se procesó la solicitud, 1 si debe esperar un minuto, 2 si el
-	 *         correo no se pudo enviar
+	 * @return 0 si se procesó la solicitud, 1 si debe esperar un minuto, 2 si el correo no se pudo
+	 *     enviar
 	 */
 	public int olvidePassword(String username) {
 		Optional<Usuario> found = usuarioRepo.findByUsername(TextoUtil.correo(username));
@@ -446,12 +451,12 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Restablece la contraseña con el código enviado al correo. La cuenta queda
-	 * verificada, porque el usuario demostró que el correo es suyo.
+	 * Restablece la contraseña con el código enviado al correo. La cuenta queda verificada, porque
+	 * el usuario demostró que el correo es suyo.
 	 *
 	 * @param data DTO con el correo, el código y la nueva contraseña
-	 * @return 0 si la contraseña se cambió, 2 si el código no es correcto, 3 si
-	 *         venció, 4 si superó los intentos, 5 si no tiene un código activo
+	 * @return 0 si la contraseña se cambió, 2 si el código no es correcto, 3 si venció, 4 si superó
+	 *     los intentos, 5 si no tiene un código activo
 	 */
 	public int restablecerPassword(CodigoDTO data) {
 		Optional<Usuario> found = usuarioRepo.findByUsername(TextoUtil.correo(data.getUsername()));
@@ -467,7 +472,8 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		temp.setVerificado(true);
 		usuarioRepo.save(temp);
 		codigoServ.eliminarTodos(temp.getUsername());
-		auditoriaServ.registrar(temp.getUsername(), "RESTABLECER_PASSWORD", "Usuario", "Restableció su contraseña");
+		auditoriaServ.registrar(
+				temp.getUsername(), "RESTABLECER_PASSWORD", "Usuario", "Restableció su contraseña");
 		return 0;
 	}
 
@@ -504,11 +510,14 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	 * Indica si un usuario cumple el filtro de la lista de administración.
 	 *
 	 * @param usuario Usuario a revisar
-	 * @param filtro  Filtro elegido
+	 * @param filtro Filtro elegido
 	 * @return true si lo cumple
 	 */
 	private boolean cumpleFiltro(Usuario usuario, String filtro) {
-		String valor = TextoUtil.vacio(filtro) ? "TODOS" : filtro.trim().toUpperCase();
+		String valor = "TODOS";
+		if (!TextoUtil.vacio(filtro)) {
+			valor = filtro.trim().toUpperCase();
+		}
 		if (valor.equals("SIN_UNIDAD")) {
 			return usuario.getRole() == Role.USER && usuario.getUnidadId() == null && usuario.isActivo();
 		} else if (valor.equals("RESIDENTES")) {
@@ -523,7 +532,7 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	/**
 	 * Indica si un usuario coincide con el texto buscado.
 	 *
-	 * @param usuario  Usuario a revisar
+	 * @param usuario Usuario a revisar
 	 * @param busqueda Texto buscado
 	 * @return true si coincide o si no hay búsqueda
 	 */
@@ -537,8 +546,7 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	}
 
 	/**
-	 * Convierte un usuario en DTO con sus intereses y los nombres de su conjunto y
-	 * su unidad.
+	 * Convierte un usuario en DTO con sus intereses y los nombres de su conjunto y su unidad.
 	 *
 	 * @param usuario Usuario a convertir
 	 * @return DTO del usuario
@@ -549,11 +557,15 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 		dto.setIntereses(usuario.interesesComoLista());
 		if (usuario.getConjuntoId() != null) {
 			Optional<Conjunto> conjunto = conjuntoRepo.findById(usuario.getConjuntoId());
-			dto.setConjuntoNombre(conjunto.isPresent() ? conjunto.get().getNombre() : null);
+			if (conjunto.isPresent()) {
+				dto.setConjuntoNombre(conjunto.get().getNombre());
+			}
 		}
 		if (usuario.getUnidadId() != null) {
 			Optional<Unidad> unidad = unidadRepo.findById(usuario.getUnidadId());
-			dto.setUnidadDescripcion(unidad.isPresent() ? unidad.get().getDescripcion() : null);
+			if (unidad.isPresent()) {
+				dto.setUnidadDescripcion(unidad.get().getDescripcion());
+			}
 		}
 		return dto;
 	}

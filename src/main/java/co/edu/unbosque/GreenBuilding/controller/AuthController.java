@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.GreenBuilding.controller;
 
 import co.edu.unbosque.GreenBuilding.dto.CodigoDTO;
@@ -22,7 +21,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
-
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -31,8 +29,8 @@ import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -41,27 +39,27 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * Controlador REST para la autenticación de usuarios. Proporciona endpoints
- * públicos para iniciar sesión, registrarse, verificar el correo y recuperar la
- * contraseña.
+ * Controlador REST para la autenticación de usuarios. Proporciona endpoints públicos para iniciar
+ * sesión, registrarse, verificar el correo y recuperar la contraseña.
  *
  * @author Daniel Montoya
  * @version 1.1
  */
 @RestController
 @RequestMapping("/auth")
-@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8080" })
+@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
 @Transactional
-@Tag(name = "Autenticación", description = "API para autenticación de usuarios (login, registro, verificación y contraseña)")
+@Tag(
+		name = "Autenticación",
+		description = "API para autenticación de usuarios (login, registro, verificación y contraseña)")
 public class AuthController {
 
 	/** Mensaje de credenciales incorrectas. */
 	private static final String CREDENCIALES_INVALIDAS = "Correo o contraseña incorrectos.";
 
-	/**
-	 * Mensaje de solicitud de código procesada, sin revelar si el correo existe.
-	 */
-	private static final String CODIGO_ENVIADO = "Si el correo está registrado, te enviamos un código. Revisa tu bandeja de entrada.";
+	/** Mensaje de solicitud de código procesada, sin revelar si el correo existe. */
+	private static final String CODIGO_ENVIADO =
+			"Si el correo está registrado, te enviamos un código. Revisa tu bandeja de entrada.";
 
 	/** Gestor de autenticación de Spring Security. */
 	private final AuthenticationManager authenticationManager;
@@ -76,14 +74,18 @@ public class AuthController {
 	private final AuditoriaService auditoriaServ;
 
 	/**
-	 * Constructor que inicializa las dependencias necesarias para el controlador.
+	 * Constructor que inicializa las dependencias necesarias para el controlador, igual que el
+	 * AuthController del proyecto de clase.
 	 *
 	 * @param authenticationManager Gestor de autenticación
-	 * @param jwtUtil               Utilidad para tokens JWT
-	 * @param usuarioServ           Servicio de usuarios
-	 * @param auditoriaServ         Servicio de auditoría
+	 * @param jwtUtil Utilidad para tokens JWT
+	 * @param usuarioServ Servicio de usuarios
+	 * @param auditoriaServ Servicio de auditoría
 	 */
-	public AuthController(AuthenticationManager authenticationManager, JwtUtil jwtUtil, UsuarioService usuarioServ,
+	public AuthController(
+			AuthenticationManager authenticationManager,
+			JwtUtil jwtUtil,
+			UsuarioService usuarioServ,
 			AuditoriaService auditoriaServ) {
 		this.authenticationManager = authenticationManager;
 		this.jwtUtil = jwtUtil;
@@ -97,7 +99,10 @@ public class AuthController {
 	 * @param loginRequest DTO con el correo y la contraseña
 	 * @return ResponseEntity con el token JWT y el rol, o un mensaje de error
 	 */
-	@Operation(summary = "Iniciar sesión", description = """
+	@Operation(
+			summary = "Iniciar sesión",
+			description =
+					"""
 			Este endpoint permite a los usuarios iniciar sesión con su correo y contraseña.
 
 			**¿Qué hace?** Valida las credenciales y devuelve un token JWT con el rol del usuario.
@@ -110,74 +115,96 @@ public class AuthController {
 			* Cuenta desactivada (401)
 
 			**Uso del token:** inclúyelo en el encabezado `Authorization: Bearer tu_token_jwt`.
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "200", description = "Inicio de sesión exitoso", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = """
-					{
-					  "token": "eyJhbGciOiJIUzI1NiJ9...",
-					  "role": "USER"
-					}
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "200",
+						description = "Inicio de sesión exitoso",
+						content =
+								@Content(
+										mediaType = "application/json",
+										examples =
+												@ExampleObject(
+														value =
+																"""
+						{
+						  "token": "eyJhbGciOiJIUzI1NiJ9...",
+						  "role": "USER"
+						}
 					"""))),
-			@ApiResponse(responseCode = "401", description = "Credenciales incorrectas o cuenta desactivada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Correo o contraseña incorrectos."))),
-			@ApiResponse(responseCode = "403", description = "Cuenta sin verificar", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Tu cuenta aún no está verificada. Escribe el código que te enviamos al correo."))) })
+				@ApiResponse(
+						responseCode = "401",
+						description = "Credenciales incorrectas o cuenta desactivada",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "Correo o contraseña incorrectos."))),
+				@ApiResponse(
+						responseCode = "403",
+						description = "Cuenta sin verificar",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples =
+												@ExampleObject(
+														value =
+																"Tu cuenta aún no está verificada. Escribe el código que te"
+																		+ " enviamos al correo.")))
+			})
 	@PostMapping("/login")
 	public ResponseEntity<?> login(
-			@Parameter(description = "Credenciales del usuario", required = true, schema = @Schema(implementation = UsuarioDTO.class), examples = @ExampleObject(value = """
+			@Parameter(
+							description = "Credenciales del usuario",
+							required = true,
+							schema = @Schema(implementation = UsuarioDTO.class),
+							examples =
+									@ExampleObject(
+											value =
+													"""
 					{
 					  "username": "residente@greenbuilding.com",
 					  "password": "Residente123*"
 					}
-					""")) @RequestBody UsuarioDTO loginRequest) {
-
+				"""))
+					@RequestBody
+					UsuarioDTO loginRequest) {
 		String username = TextoUtil.correo(loginRequest.getUsername());
 		String password = "";
-
 		if (loginRequest.getPassword() != null) {
 			password = loginRequest.getPassword();
 		}
-
 		try {
-			Authentication authentication = authenticationManager
-					.authenticate(new UsernamePasswordAuthenticationToken(username, password));
-
+			Authentication authentication =
+					authenticationManager.authenticate(
+							new UsernamePasswordAuthenticationToken(username, password));
 			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
 			String jwt = jwtUtil.generateToken(userDetails);
 			String role = null;
-
 			if (userDetails instanceof Usuario) {
 				Usuario usuario = (Usuario) userDetails;
 				role = usuario.getRole().name();
 			}
-
 			auditoriaServ.registrar(userDetails.getUsername(), "LOGIN", "Usuario", "Inicio de sesión");
-
 			return ResponseEntity.ok(new AuthResponse(jwt, role));
-
 		} catch (LockedException e) {
-
 			if (usuarioServ.validateCredentials(username, password) == 0) {
-				auditoriaServ.registrar(username, "LOGIN", "Usuario",
-						"Intento de inicio de sesión con cuenta desactivada");
-
+				auditoriaServ.registrar(
+						username, "LOGIN", "Usuario", "Intento de inicio de sesión con cuenta desactivada");
 				return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-						.body("Tu cuenta está desactivada. Comunícate con la administración de tu conjunto.");
+						.body(
+								"Tu cuenta está desactivada. Comunícate con la administración de tu conjunto.");
 			}
-
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
-
 		} catch (DisabledException e) {
-
 			if (usuarioServ.validateCredentials(username, password) == 0) {
 				return ResponseEntity.status(HttpStatus.FORBIDDEN)
-						.body("Tu cuenta aún no está verificada. Escribe el código que te enviamos al correo.");
+						.body(
+								"Tu cuenta aún no está verificada. Escribe el código que te enviamos al correo.");
 			}
-
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
-
 		} catch (AuthenticationException e) {
-
 			auditoriaServ.registrar(null, "LOGIN", "Usuario", "Intento fallido con " + username);
-
 			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
 		}
 	}
@@ -188,7 +215,10 @@ public class AuthController {
 	 * @param registerRequest DTO con los datos del nuevo residente
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
-	@Operation(summary = "Registrar usuario", description = """
+	@Operation(
+			summary = "Registrar usuario",
+			description =
+					"""
 			Este endpoint permite crear una nueva cuenta de residente.
 
 			**¿Qué hace?** Crea la cuenta sin verificar, con rol USER, y envía un código de 6 dígitos al correo.
@@ -200,14 +230,45 @@ public class AuthController {
 			* El correo ya está registrado (409)
 			* El conjunto no existe (404)
 			* Datos inválidos (400)
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "201", description = "Usuario registrado exitosamente", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Te registraste. Revisa tu correo: te enviamos un código de verificación."))),
-			@ApiResponse(responseCode = "409", description = "El correo ya está registrado", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Ya existe una cuenta con ese correo."))),
-			@ApiResponse(responseCode = "400", description = "Datos inválidos", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Escribe un correo electrónico válido."))) })
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "201",
+						description = "Usuario registrado exitosamente",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples =
+												@ExampleObject(
+														value =
+																"Te registraste. Revisa tu correo: te enviamos un código de"
+																		+ " verificación."))),
+				@ApiResponse(
+						responseCode = "409",
+						description = "El correo ya está registrado",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "Ya existe una cuenta con ese correo."))),
+				@ApiResponse(
+						responseCode = "400",
+						description = "Datos inválidos",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "Escribe un correo electrónico válido.")))
+			})
 	@PostMapping("/register")
 	public ResponseEntity<?> register(
-			@Parameter(description = "Información del nuevo residente", required = true, schema = @Schema(implementation = UsuarioDTO.class), examples = @ExampleObject(value = """
+			@Parameter(
+							description = "Información del nuevo residente",
+							required = true,
+							schema = @Schema(implementation = UsuarioDTO.class),
+							examples =
+									@ExampleObject(
+											value =
+													"""
 					{
 					  "nombre": "Ana",
 					  "apellido": "Pérez",
@@ -217,43 +278,39 @@ public class AuthController {
 					  "conjuntoId": 1,
 					  "unidadSolicitada": "Torre 2 - 501"
 					}
-					""")) @RequestBody UsuarioDTO registerRequest) {
-
+				"""))
+					@RequestBody
+					UsuarioDTO registerRequest) {
 		try {
 			ExceptionChecker.checkEmpty("nombre", registerRequest.getNombre());
 			ExceptionChecker.checkEmpty("apellido", registerRequest.getApellido());
 			ExceptionChecker.checkEmpty("teléfono", registerRequest.getTelefono());
 			ExceptionChecker.checkEmpty("unidad solicitada", registerRequest.getUnidadSolicitada());
-
 			ExceptionChecker.checkCharacters(registerRequest.getNombre());
 			ExceptionChecker.checkCharacters(registerRequest.getApellido());
 			ExceptionChecker.checkCharacters(registerRequest.getUnidadSolicitada());
-
 			ExceptionChecker.checkEmail(registerRequest.getUsername());
 			ExceptionChecker.checkPassword(registerRequest.getPassword());
 			ExceptionChecker.checkSelected("Elige tu conjunto.", registerRequest.getConjuntoId());
-
-		} catch (EmptyFieldException | InvalidCharactersException | EmailNotValidException | PasswordNotValidException
+		} catch (EmptyFieldException
+				| InvalidCharactersException
+				| EmailNotValidException
+				| PasswordNotValidException
 				| OptionNotValidException e) {
-
 			return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
 		}
-
 		int result = usuarioServ.create(registerRequest);
-
 		if (result == 0) {
 			return ResponseEntity.status(HttpStatus.CREATED)
 					.body("Te registraste. Revisa tu correo: te enviamos un código de verificación.");
-
 		} else if (result == 1) {
 			return ResponseEntity.status(HttpStatus.CONFLICT).body("Ya existe una cuenta con ese correo.");
-
 		} else if (result == 2) {
 			return ResponseEntity.status(HttpStatus.NOT_FOUND).body("El conjunto elegido no existe.");
-
 		} else {
 			return ResponseEntity.status(HttpStatus.CREATED)
-					.body("Te registraste, pero no pudimos enviar el código. Usa la opción de reenviar código.");
+					.body(
+							"Te registraste, pero no pudimos enviar el código. Usa la opción de reenviar código.");
 		}
 	}
 
@@ -263,41 +320,64 @@ public class AuthController {
 	 * @param request DTO con el correo y el código
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
-	@Operation(summary = "Verificar cuenta", description = """
+	@Operation(
+			summary = "Verificar cuenta",
+			description =
+					"""
 			Este endpoint permite verificar el correo con el código de 6 dígitos.
 
 			**¿Qué hace?** Si el código es correcto, la cuenta queda verificada y ya se puede iniciar sesión.
 			El código vence en 15 minutos y admite 5 intentos.
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "202", description = "Cuenta verificada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Tu cuenta quedó verificada. Ya puedes iniciar sesión."))),
-			@ApiResponse(responseCode = "400", description = "Código incorrecto, vencido o sin intentos", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "El código no es correcto."))) })
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "202",
+						description = "Cuenta verificada",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples =
+												@ExampleObject(
+														value = "Tu cuenta quedó verificada. Ya puedes iniciar sesión."))),
+				@ApiResponse(
+						responseCode = "400",
+						description = "Código incorrecto, vencido o sin intentos",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "El código no es correcto.")))
+			})
 	@PostMapping("/verify")
 	public ResponseEntity<String> verify(
-			@Parameter(description = "Correo y código", required = true, schema = @Schema(implementation = CodigoDTO.class), examples = @ExampleObject(value = """
+			@Parameter(
+							description = "Correo y código",
+							required = true,
+							schema = @Schema(implementation = CodigoDTO.class),
+							examples =
+									@ExampleObject(
+											value =
+													"""
 					{
 					  "username": "ana@correo.com",
 					  "codigo": "123456"
 					}
-					""")) @RequestBody CodigoDTO request) {
-
+				"""))
+					@RequestBody
+					CodigoDTO request) {
 		try {
 			ExceptionChecker.checkEmpty("correo", request.getUsername());
 			ExceptionChecker.checkEmpty("código", request.getCodigo());
-
 		} catch (EmptyFieldException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
-
 		int status = usuarioServ.verificar(request);
-
 		if (status == 0) {
-			return new ResponseEntity<>("Tu cuenta quedó verificada. Ya puedes iniciar sesión.", HttpStatus.ACCEPTED);
-
+			return new ResponseEntity<>(
+					"Tu cuenta quedó verificada. Ya puedes iniciar sesión.", HttpStatus.ACCEPTED);
 		} else if (status == 1) {
-			return new ResponseEntity<>("Tu cuenta ya estaba verificada. Ya puedes iniciar sesión.",
-					HttpStatus.ACCEPTED);
-
+			return new ResponseEntity<>(
+					"Tu cuenta ya estaba verificada. Ya puedes iniciar sesión.", HttpStatus.ACCEPTED);
 		} else {
 			return new ResponseEntity<>(mensajeCodigo(status), HttpStatus.BAD_REQUEST);
 		}
@@ -309,19 +389,41 @@ public class AuthController {
 	 * @param request DTO con el correo
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
-	@Operation(summary = "Reenviar código de verificación", description = """
+	@Operation(
+			summary = "Reenviar código de verificación",
+			description =
+					"""
 			Este endpoint permite pedir un código de verificación nuevo.
 
 			**Nota:** la respuesta es la misma aunque el correo no exista, para no revelar qué correos están registrados.
 			Hay que esperar un minuto entre cada envío.
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "202", description = "Solicitud procesada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = CODIGO_ENVIADO))),
-			@ApiResponse(responseCode = "429", description = "Debe esperar un minuto", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Espera un minuto antes de pedir otro código."))) })
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "202",
+						description = "Solicitud procesada",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = CODIGO_ENVIADO))),
+				@ApiResponse(
+						responseCode = "429",
+						description = "Debe esperar un minuto",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "Espera un minuto antes de pedir otro código.")))
+			})
 	@PostMapping("/resendcode")
 	public ResponseEntity<String> resendCode(
-			@Parameter(description = "Correo del usuario", required = true, schema = @Schema(implementation = CodigoDTO.class), examples = @ExampleObject(value = "{ \"username\": \"ana@correo.com\" }")) @RequestBody CodigoDTO request) {
-
+			@Parameter(
+							description = "Correo del usuario",
+							required = true,
+							schema = @Schema(implementation = CodigoDTO.class),
+							examples = @ExampleObject(value = "{ \"username\": \"ana@correo.com\" }"))
+					@RequestBody
+					CodigoDTO request) {
 		return respuestaEnvioCodigo(usuarioServ.reenviarCodigo(request.getUsername()));
 	}
 
@@ -331,18 +433,40 @@ public class AuthController {
 	 * @param request DTO con el correo
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
-	@Operation(summary = "Olvidé mi contraseña", description = """
+	@Operation(
+			summary = "Olvidé mi contraseña",
+			description =
+					"""
 			Este endpoint envía un código para restablecer la contraseña.
 
 			**Nota:** la respuesta es la misma aunque el correo no exista, para no revelar qué correos están registrados.
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "202", description = "Solicitud procesada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = CODIGO_ENVIADO))),
-			@ApiResponse(responseCode = "429", description = "Debe esperar un minuto", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Espera un minuto antes de pedir otro código."))) })
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "202",
+						description = "Solicitud procesada",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = CODIGO_ENVIADO))),
+				@ApiResponse(
+						responseCode = "429",
+						description = "Debe esperar un minuto",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "Espera un minuto antes de pedir otro código.")))
+			})
 	@PostMapping("/forgotpassword")
 	public ResponseEntity<String> forgotPassword(
-			@Parameter(description = "Correo del usuario", required = true, schema = @Schema(implementation = CodigoDTO.class), examples = @ExampleObject(value = "{ \"username\": \"ana@correo.com\" }")) @RequestBody CodigoDTO request) {
-
+			@Parameter(
+							description = "Correo del usuario",
+							required = true,
+							schema = @Schema(implementation = CodigoDTO.class),
+							examples = @ExampleObject(value = "{ \"username\": \"ana@correo.com\" }"))
+					@RequestBody
+					CodigoDTO request) {
 		return respuestaEnvioCodigo(usuarioServ.olvidePassword(request.getUsername()));
 	}
 
@@ -352,38 +476,62 @@ public class AuthController {
 	 * @param request DTO con el correo, el código y la nueva contraseña
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
-	@Operation(summary = "Restablecer contraseña", description = """
+	@Operation(
+			summary = "Restablecer contraseña",
+			description =
+					"""
 			Este endpoint cambia la contraseña con el código recibido en el correo.
 
 			**¿Qué hace?** Valida el código y guarda la nueva contraseña, que debe cumplir el estándar de seguridad.
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "202", description = "Contraseña actualizada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Tu contraseña se actualizó. Ya puedes iniciar sesión."))),
-			@ApiResponse(responseCode = "400", description = "Código o contraseña inválidos", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "El código venció. Solicita uno nuevo."))) })
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "202",
+						description = "Contraseña actualizada",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples =
+												@ExampleObject(
+														value = "Tu contraseña se actualizó. Ya puedes iniciar sesión."))),
+				@ApiResponse(
+						responseCode = "400",
+						description = "Código o contraseña inválidos",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples = @ExampleObject(value = "El código venció. Solicita uno nuevo.")))
+			})
 	@PostMapping("/resetpassword")
 	public ResponseEntity<String> resetPassword(
-			@Parameter(description = "Correo, código y nueva contraseña", required = true, schema = @Schema(implementation = CodigoDTO.class), examples = @ExampleObject(value = """
+			@Parameter(
+							description = "Correo, código y nueva contraseña",
+							required = true,
+							schema = @Schema(implementation = CodigoDTO.class),
+							examples =
+									@ExampleObject(
+											value =
+													"""
 					{
 					  "username": "ana@correo.com",
 					  "codigo": "123456",
 					  "nuevaPassword": "NuevaClave1*"
 					}
-					""")) @RequestBody CodigoDTO request) {
-
+				"""))
+					@RequestBody
+					CodigoDTO request) {
 		try {
 			ExceptionChecker.checkEmpty("correo", request.getUsername());
 			ExceptionChecker.checkEmpty("código", request.getCodigo());
 			ExceptionChecker.checkPassword(request.getNuevaPassword());
-
 		} catch (EmptyFieldException | PasswordNotValidException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
-
 		int status = usuarioServ.restablecerPassword(request);
-
 		if (status == 0) {
-			return new ResponseEntity<>("Tu contraseña se actualizó. Ya puedes iniciar sesión.", HttpStatus.ACCEPTED);
-
+			return new ResponseEntity<>(
+					"Tu contraseña se actualizó. Ya puedes iniciar sesión.", HttpStatus.ACCEPTED);
 		} else {
 			return new ResponseEntity<>(mensajeCodigo(status), HttpStatus.BAD_REQUEST);
 		}
@@ -394,22 +542,28 @@ public class AuthController {
 	 *
 	 * @return ResponseEntity con mensaje de éxito
 	 */
-	@Operation(summary = "Cerrar sesión", description = """
+	@Operation(
+			summary = "Cerrar sesión",
+			description =
+					"""
 			Este endpoint registra en la auditoría que el usuario cerró sesión.
 
 			**Nota:** el token JWT no se guarda en el servidor; el front lo elimina.
-			""")
-	@ApiResponses(value = {
-			@ApiResponse(responseCode = "202", description = "Sesión cerrada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Sesión cerrada."))) })
+		""")
+	@ApiResponses(
+			value = {
+				@ApiResponse(
+						responseCode = "202",
+						description = "Sesión cerrada",
+						content =
+								@Content(mediaType = "text/plain", examples = @ExampleObject(value = "Sesión cerrada.")))
+			})
 	@PostMapping("/logout")
 	public ResponseEntity<String> logout() {
-
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
 		if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
 			auditoriaServ.registrar(authentication.getName(), "LOGOUT", "Usuario", "Cerró sesión");
 		}
-
 		return new ResponseEntity<>("Sesión cerrada.", HttpStatus.ACCEPTED);
 	}
 
@@ -420,16 +574,14 @@ public class AuthController {
 	 * @return ResponseEntity con el mensaje correspondiente
 	 */
 	private ResponseEntity<String> respuestaEnvioCodigo(int status) {
-
 		if (status == 0) {
 			return new ResponseEntity<>(CODIGO_ENVIADO, HttpStatus.ACCEPTED);
-
 		} else if (status == 1) {
-			return new ResponseEntity<>("Espera un minuto antes de pedir otro código.", HttpStatus.TOO_MANY_REQUESTS);
-
+			return new ResponseEntity<>(
+					"Espera un minuto antes de pedir otro código.", HttpStatus.TOO_MANY_REQUESTS);
 		} else {
-			return new ResponseEntity<>("No pudimos enviar el correo. Intenta más tarde.",
-					HttpStatus.SERVICE_UNAVAILABLE);
+			return new ResponseEntity<>(
+					"No pudimos enviar el correo. Intenta más tarde.", HttpStatus.SERVICE_UNAVAILABLE);
 		}
 	}
 
@@ -440,24 +592,20 @@ public class AuthController {
 	 * @return Mensaje para el usuario
 	 */
 	private String mensajeCodigo(int status) {
-
 		if (status == 3) {
 			return "El código venció. Solicita uno nuevo.";
-
 		} else if (status == 4) {
 			return "Superaste el número de intentos. Solicita un código nuevo.";
-
 		} else if (status == 5) {
 			return "No tienes un código activo. Solicita uno nuevo.";
-
 		} else {
 			return "El código no es correcto.";
 		}
 	}
 
 	/**
-	 * Clase interna para representar la respuesta de autenticación. Contiene el
-	 * token JWT y el rol del usuario autenticado.
+	 * Clase interna para representar la respuesta de autenticación. Contiene el token JWT y el rol
+	 * del usuario autenticado.
 	 */
 	private static class AuthResponse {
 
@@ -471,7 +619,7 @@ public class AuthController {
 		 * Constructor con token y rol.
 		 *
 		 * @param token Token JWT generado
-		 * @param role  Rol del usuario
+		 * @param role Rol del usuario
 		 */
 		public AuthResponse(String token, String role) {
 			this.token = token;
