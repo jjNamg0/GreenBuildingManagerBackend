@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controlador REST para las recomendaciones. Los eventos y espacios recomendados son para
  * residentes (ROLE_USER); los conjuntos cercanos son públicos.
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController

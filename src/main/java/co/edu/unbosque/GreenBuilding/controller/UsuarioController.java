@@ -40,8 +40,8 @@ import org.springframework.web.bind.annotation.RestController;
  * son para cualquier usuario con sesión, /updateintereses es para residentes (ROLE_USER) y todos
  * los demás requieren ROLE_ADMIN.
  *
- * @author Juan Arango
- * @version 1.0
+ * @author Daniel Montoya
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/user")

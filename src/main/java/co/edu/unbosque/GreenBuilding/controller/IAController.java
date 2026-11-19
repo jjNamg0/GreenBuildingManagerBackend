@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controlador REST del chat de ayuda. Requiere haber iniciado sesión (ROLE_USER o ROLE_ADMIN). La
  * API key del modelo vive en el back y el front nunca la ve.
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController

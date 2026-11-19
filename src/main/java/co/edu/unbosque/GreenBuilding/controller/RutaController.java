@@ -27,7 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controlador REST para calcular rutas con OSRM. Es público, para que el mapa funcione sin iniciar
  * sesión.
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController

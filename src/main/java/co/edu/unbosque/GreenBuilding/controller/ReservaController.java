@@ -43,7 +43,7 @@ import org.springframework.web.bind.annotation.RestController;
  * disponibilidad, reservan y cancelan; los administradores (ROLE_ADMIN) ven todas las reservas y
  * las aprueban o rechazan.
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController

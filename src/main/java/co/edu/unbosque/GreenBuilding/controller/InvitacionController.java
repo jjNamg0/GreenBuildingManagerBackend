@@ -36,7 +36,7 @@ import org.springframework.web.bind.annotation.RestController;
  * administrador invita a los eventos (ROLE_ADMIN) y cada residente invita a sus reservas aprobadas
  * (ROLE_USER).
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController

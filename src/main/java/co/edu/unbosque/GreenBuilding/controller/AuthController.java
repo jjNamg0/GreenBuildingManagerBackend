@@ -42,8 +42,8 @@ import org.springframework.web.bind.annotation.RestController;
  * Controlador REST para la autenticación de usuarios. Proporciona endpoints públicos para iniciar
  * sesión, registrarse, verificar el correo y recuperar la contraseña.
  *
- * @author Juan Arango
- * @version 1.0
+ * @author Daniel Montoya
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/auth")

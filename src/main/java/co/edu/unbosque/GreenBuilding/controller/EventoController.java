@@ -44,7 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
  * conjunto y confirman asistencia; los administradores crean, editan, cancelan, eliminan y envían
  * invitaciones por correo.
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController

@@ -39,7 +39,7 @@ import org.springframework.web.bind.annotation.RestController;
  * Controlador REST para la gestión de espacios comunes. Los residentes solo ven los espacios de su
  * conjunto; crear, actualizar y eliminar requieren ROLE_ADMIN.
  *
- * @author Juan Arango
+ * @author Daniel Montoya
  * @version 1.0
  */
 @RestController
