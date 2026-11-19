@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -20,7 +21,11 @@ public class TramoOsrmDTO {
 	 * @param steps Pasos del tramo.
 	 */
 	public TramoOsrmDTO(List<PasoOsrmDTO> steps) {
-		this.steps = steps;
+		if (steps == null) {
+			this.steps = null;
+		} else {
+			this.steps = new ArrayList<>(steps);
+		}
 	}
 
 	/**
@@ -38,7 +43,11 @@ public class TramoOsrmDTO {
 	 * @param steps Pasos del tramo
 	 */
 	public void setSteps(List<PasoOsrmDTO> steps) {
-		this.steps = steps;
+		if (steps == null) {
+			this.steps = null;
+		} else {
+			this.steps = new ArrayList<>(steps);
+		}
 	}
 
 	/**

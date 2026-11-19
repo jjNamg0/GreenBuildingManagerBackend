@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -38,7 +39,11 @@ public class PeticionIADTO {
 	 */
 	public PeticionIADTO(String model, List<MensajeIADTO> messages, double temperature, int max_tokens, boolean stream) {
 		this.model = model;
-		this.messages = messages;
+		if (messages == null) {
+			this.messages = null;
+		} else {
+			this.messages = new ArrayList<>(messages);
+		}
 		this.temperature = temperature;
 		this.max_tokens = max_tokens;
 		this.stream = stream;
@@ -77,7 +82,11 @@ public class PeticionIADTO {
 	 * @param messages Instrucción, conversación anterior y pregunta
 	 */
 	public void setMessages(List<MensajeIADTO> messages) {
-		this.messages = messages;
+		if (messages == null) {
+			this.messages = null;
+		} else {
+			this.messages = new ArrayList<>(messages);
+		}
 	}
 
 	/**
@@ -160,7 +169,7 @@ public class PeticionIADTO {
 		PeticionIADTO other = (PeticionIADTO) obj;
 		return Objects.equals(model, other.model)
 				&& Objects.equals(messages, other.messages)
-				&& temperature == other.temperature
+				&& Double.doubleToLongBits(temperature) == Double.doubleToLongBits(other.temperature)
 				&& max_tokens == other.max_tokens
 				&& stream == other.stream;
 	}

@@ -111,7 +111,7 @@ public class RecomendacionConjuntoDTO {
 		if (getClass() != obj.getClass()) return false;
 		RecomendacionConjuntoDTO other = (RecomendacionConjuntoDTO) obj;
 		return Objects.equals(conjunto, other.conjunto)
-				&& distanciaKm == other.distanciaKm
+				&& Double.doubleToLongBits(distanciaKm) == Double.doubleToLongBits(other.distanciaKm)
 				&& Objects.equals(motivo, other.motivo);
 	}
 

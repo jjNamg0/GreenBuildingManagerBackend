@@ -192,25 +192,64 @@ public class AuditoriaService {
 			String motivo,
 			LocalDate desde,
 			LocalDate hasta) {
-		if (!TextoUtil.vacio(usuario)) {
-			String buscado = usuario.trim().toLowerCase();
-			boolean porCorreo = registro.getUsername() != null && registro.getUsername().toLowerCase().contains(buscado);
-			boolean porNombre =
-					registro.getNombreUsuario() != null && registro.getNombreUsuario().toLowerCase().contains(buscado);
-			if (!porCorreo && !porNombre) {
-				return false;
-			}
+		return coincideUsuario(registro, usuario)
+				&& coincideExacto(registro.getAccion(), accion)
+				&& coincideExacto(registro.getRole(), role)
+				&& contieneTexto(registro.getMotivo(), motivo)
+				&& dentroDeFechas(registro, desde, hasta);
+	}
+
+	/**
+	 * Indica si el correo o el nombre del usuario del registro contienen el texto buscado.
+	 *
+	 * @param registro Registro a revisar
+	 * @param usuario Texto a buscar en el correo o nombre del usuario
+	 * @return true si no hay texto para buscar o si el correo o el nombre lo contienen
+	 */
+	private boolean coincideUsuario(RegistroAuditoria registro, String usuario) {
+		if (TextoUtil.vacio(usuario)) {
+			return true;
 		}
-		if (!TextoUtil.vacio(accion) && !accion.trim().toUpperCase().equals(registro.getAccion())) {
-			return false;
+		return contieneTexto(registro.getUsername(), usuario) || contieneTexto(registro.getNombreUsuario(), usuario);
+	}
+
+	/**
+	 * Indica si un valor es igual al filtro, sin importar mayúsculas ni espacios del filtro.
+	 *
+	 * @param valor Valor guardado en el registro
+	 * @param filtro Valor a filtrar
+	 * @return true si no hay filtro o si el valor es igual al filtro
+	 */
+	private boolean coincideExacto(String valor, String filtro) {
+		if (TextoUtil.vacio(filtro)) {
+			return true;
 		}
-		if (!TextoUtil.vacio(role) && !role.trim().toUpperCase().equals(registro.getRole())) {
-			return false;
+		return filtro.trim().toUpperCase().equals(valor);
+	}
+
+	/**
+	 * Indica si un valor contiene el texto del filtro, sin importar mayúsculas.
+	 *
+	 * @param valor Valor guardado en el registro
+	 * @param filtro Texto a buscar
+	 * @return true si no hay filtro o si el valor contiene el texto
+	 */
+	private boolean contieneTexto(String valor, String filtro) {
+		if (TextoUtil.vacio(filtro)) {
+			return true;
 		}
-		if (!TextoUtil.vacio(motivo)
-				&& (registro.getMotivo() == null || !registro.getMotivo().toLowerCase().contains(motivo.trim().toLowerCase()))) {
-			return false;
-		}
+		return valor != null && valor.toLowerCase().contains(filtro.trim().toLowerCase());
+	}
+
+	/**
+	 * Indica si la fecha del registro está dentro del rango indicado.
+	 *
+	 * @param registro Registro a revisar
+	 * @param desde Fecha inicial
+	 * @param hasta Fecha final
+	 * @return true si la fecha está dentro del rango, o si no se indicó rango
+	 */
+	private boolean dentroDeFechas(RegistroAuditoria registro, LocalDate desde, LocalDate hasta) {
 		if (desde != null && (registro.getFecha() == null || registro.getFecha().isBefore(desde.atStartOfDay()))) {
 			return false;
 		}

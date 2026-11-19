@@ -111,8 +111,8 @@ public class PasoRutaDTO {
 		if (getClass() != obj.getClass()) return false;
 		PasoRutaDTO other = (PasoRutaDTO) obj;
 		return Objects.equals(instruccion, other.instruccion)
-				&& distanciaMetros == other.distanciaMetros
-				&& duracionSegundos == other.duracionSegundos;
+				&& Double.doubleToLongBits(distanciaMetros) == Double.doubleToLongBits(other.distanciaMetros)
+				&& Double.doubleToLongBits(duracionSegundos) == Double.doubleToLongBits(other.duracionSegundos);
 	}
 
 	/**
