@@ -84,6 +84,12 @@ public class Reserva {
 	private LocalDateTime fechaCreacion;
 
 	/**
+	 * Código del enlace público de la invitación.
+	 */
+	@Column(unique = true, length = 40)
+	private String codigoInvitacion;
+
+	/**
 	 * Constructor por defecto. La reserva empieza en estado PENDIENTE.
 	 */
 	public Reserva() {
@@ -330,6 +336,24 @@ public class Reserva {
 	 */
 	public void setFechaCreacion(LocalDateTime fechaCreacion) {
 		this.fechaCreacion = fechaCreacion;
+	}
+
+	/**
+	 * Obtiene el código del enlace público de la invitación.
+	 *
+	 * @return El código, o null si aún no tiene
+	 */
+	public String getCodigoInvitacion() {
+		return codigoInvitacion;
+	}
+
+	/**
+	 * Establece el código del enlace público de la invitación.
+	 *
+	 * @param codigoInvitacion El nuevo código
+	 */
+	public void setCodigoInvitacion(String codigoInvitacion) {
+		this.codigoInvitacion = codigoInvitacion;
 	}
 
 	/**

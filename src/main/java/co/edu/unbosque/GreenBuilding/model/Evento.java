@@ -100,6 +100,12 @@ public class Evento {
 	private Plantilla plantilla;
 
 	/**
+	 * Código del enlace público de la invitación.
+	 */
+	@Column(unique = true, length = 40)
+	private String codigoInvitacion;
+
+	/**
 	 * Constructor por defecto. El evento empieza en estado PROGRAMADO.
 	 */
 	public Evento() {
@@ -167,6 +173,17 @@ public class Evento {
 			return Estado.FINALIZADO;
 		}
 		return estado;
+	}
+
+	/**
+	 * Indica si el evento se cruza con un rango de horas del mismo día.
+	 *
+	 * @param inicio Hora de inicio del rango
+	 * @param fin Hora de fin del rango
+	 * @return true si hay cruce
+	 */
+	public boolean seCruzaCon(LocalTime inicio, LocalTime fin) {
+		return horaInicio.isBefore(fin) && inicio.isBefore(horaFin);
 	}
 
 	/**
@@ -419,6 +436,24 @@ public class Evento {
 	 */
 	public void setPlantilla(Plantilla plantilla) {
 		this.plantilla = plantilla;
+	}
+
+	/**
+	 * Obtiene el código del enlace público de la invitación.
+	 *
+	 * @return El código, o null si aún no tiene
+	 */
+	public String getCodigoInvitacion() {
+		return codigoInvitacion;
+	}
+
+	/**
+	 * Establece el código del enlace público de la invitación.
+	 *
+	 * @param codigoInvitacion El nuevo código
+	 */
+	public void setCodigoInvitacion(String codigoInvitacion) {
+		this.codigoInvitacion = codigoInvitacion;
 	}
 
 	/**

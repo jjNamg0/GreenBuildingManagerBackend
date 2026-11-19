@@ -1,7 +1,9 @@
 package co.edu.unbosque.GreenBuilding.repository;
 
 import java.time.LocalDate;
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -54,4 +56,21 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
 	 * @return Número de eventos
 	 */
 	public long countByEstadoAndFechaGreaterThanEqual(Estado estado, LocalDate fecha);
+
+	/**
+	 * Busca los eventos de un espacio en un día.
+	 *
+	 * @param espacioId Identificador del espacio
+	 * @param fecha Día a revisar
+	 * @return Lista de eventos del día en ese espacio
+	 */
+	public List<Evento> findByEspacioIdAndFecha(Long espacioId, LocalDate fecha);
+
+	/**
+	 * Busca un evento por el código de su enlace de invitación.
+	 *
+	 * @param codigoInvitacion Código del enlace
+	 * @return Un Optional con el evento si existe
+	 */
+	public Optional<Evento> findByCodigoInvitacion(String codigoInvitacion);
 }

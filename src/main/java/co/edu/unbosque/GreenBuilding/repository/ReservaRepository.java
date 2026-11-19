@@ -2,6 +2,7 @@ package co.edu.unbosque.GreenBuilding.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -70,4 +71,12 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 * @return Número de reservas
 	 */
 	public long countByEstado(Estado estado);
+
+	/**
+	 * Busca una reserva por el código de su enlace de invitación.
+	 *
+	 * @param codigoInvitacion Código del enlace
+	 * @return Un Optional con la reserva si existe
+	 */
+	public Optional<Reserva> findByCodigoInvitacion(String codigoInvitacion);
 }
