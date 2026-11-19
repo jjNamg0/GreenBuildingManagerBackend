@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.GreenBuilding.controller;
 
 import co.edu.unbosque.GreenBuilding.dto.CambioPasswordDTO;
@@ -41,7 +42,7 @@ import org.springframework.web.bind.annotation.RestController;
  * para residentes (ROLE_USER) y todos los demás requieren ROLE_ADMIN.
  *
  * @author Daniel Montoya
- * @version 1.0
+ * @version 1.1
  */
 @RestController
 @RequestMapping("/user")
@@ -65,22 +66,22 @@ public class UsuarioController {
 	 * @return ResponseEntity con los datos del usuario
 	 */
 	@Operation(summary = "Obtener mi usuario", description = """
-				Este endpoint devuelve los datos del usuario que tiene la sesión iniciada.
+			Este endpoint devuelve los datos del usuario que tiene la sesión iniciada.
 
-				**¿Qué hace?** Incluye su conjunto, su unidad (si ya tiene) y sus intereses. Nunca devuelve la contraseña.
+			**¿Qué hace?** Incluye su conjunto, su unidad (si ya tiene) y sus intereses. Nunca devuelve la contraseña.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Usuario encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class), examples = @ExampleObject(value = """
-						{
-						  "id": 3,
-						  "nombre": "Laura",
-						  "apellido": "Gómez",
-						  "username": "residente@greenbuilding.com",
-						  "role": "USER",
-						  "conjuntoNombre": "Reservas de la Sabana",
-						  "unidadDescripcion": "Torre 1 · Apto 302",
-						  "intereses": ["FIESTAS", "NINOS"]
-						}
+					{
+					  "id": 3,
+					  "nombre": "Laura",
+					  "apellido": "Gómez",
+					  "username": "residente@greenbuilding.com",
+					  "role": "USER",
+					  "conjuntoNombre": "Reservas de la Sabana",
+					  "unidadDescripcion": "Torre 1 · Apto 302",
+					  "intereses": ["FIESTAS", "NINOS"]
+					}
 					"""))),
 			@ApiResponse(responseCode = "404", description = "Usuario no encontrado", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "{}"))) })
 	@GetMapping("/getme")
@@ -100,7 +101,7 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Actualizar mi perfil", description = """
-				Este endpoint permite al usuario cambiar su nombre, apellido y teléfono.
+			Este endpoint permite al usuario cambiar su nombre, apellido y teléfono.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Perfil actualizado", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Tu perfil se actualizó correctamente."))),
@@ -108,11 +109,11 @@ public class UsuarioController {
 	@PutMapping(path = "/updateme", consumes = MediaType.APPLICATION_JSON_VALUE)
 	ResponseEntity<String> updateMe(
 			@Parameter(description = "Nuevos datos del perfil", required = true, schema = @Schema(implementation = UsuarioDTO.class), examples = @ExampleObject(value = """
-						{
-						  "nombre": "Laura",
-						  "apellido": "Gómez",
-						  "telefono": "3001234567"
-						}
+					{
+					  "nombre": "Laura",
+					  "apellido": "Gómez",
+					  "telefono": "3001234567"
+					}
 					""")) @RequestBody UsuarioDTO newUser) {
 		try {
 			ExceptionChecker.checkEmpty("nombre", newUser.getNombre());
@@ -138,9 +139,9 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Cambiar mi contraseña", description = """
-				Este endpoint permite cambiar la contraseña escribiendo la actual.
+			Este endpoint permite cambiar la contraseña escribiendo la actual.
 
-				**Nota:** la nueva contraseña debe cumplir el estándar de seguridad y ser distinta a la actual.
+			**Nota:** la nueva contraseña debe cumplir el estándar de seguridad y ser distinta a la actual.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Contraseña cambiada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Tu contraseña se cambió correctamente."))),
@@ -148,10 +149,10 @@ public class UsuarioController {
 	@PutMapping(path = "/changepassword", consumes = MediaType.APPLICATION_JSON_VALUE)
 	ResponseEntity<String> changePassword(
 			@Parameter(description = "Contraseña actual y nueva", required = true, schema = @Schema(implementation = CambioPasswordDTO.class), examples = @ExampleObject(value = """
-						{
-						  "passwordActual": "Residente123*",
-						  "passwordNueva": "NuevaClave1*"
-						}
+					{
+					  "passwordActual": "Residente123*",
+					  "passwordNueva": "NuevaClave1*"
+					}
 					""")) @RequestBody CambioPasswordDTO data) {
 		try {
 			ExceptionChecker.checkEmpty("contraseña actual", data.getPasswordActual());
@@ -178,9 +179,9 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Actualizar mis intereses", description = """
-				Este endpoint guarda los intereses del residente, que se usan para las recomendaciones.
+			Este endpoint guarda los intereses del residente, que se usan para las recomendaciones.
 
-				**Valores válidos:** FIESTAS, NINOS, DEPORTE, CULTURA, ASAMBLEAS, PISCINA, GIMNASIO, BBQ, NATURALEZA, MASCOTAS.
+			**Valores válidos:** FIESTAS, NINOS, DEPORTE, CULTURA, ASAMBLEAS, PISCINA, GIMNASIO, BBQ, NATURALEZA, MASCOTAS.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Intereses guardados", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Guardamos tus intereses. Tus recomendaciones se actualizarán."))),
@@ -213,11 +214,11 @@ public class UsuarioController {
 	 * @return ResponseEntity con la lista de usuarios
 	 */
 	@Operation(summary = "Obtener todos los usuarios", description = """
-				Este endpoint permite obtener la lista de usuarios registrados.
+			Este endpoint permite obtener la lista de usuarios registrados.
 
-				**Filtros:** TODOS, SIN_UNIDAD (esperan que les asignen unidad), RESIDENTES (con unidad) e INACTIVOS.
+			**Filtros:** TODOS, SIN_UNIDAD (esperan que les asignen unidad), RESIDENTES (con unidad) e INACTIVOS.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Lista de usuarios recuperada correctamente", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
@@ -247,9 +248,9 @@ public class UsuarioController {
 	 * @return ResponseEntity con el número de usuarios
 	 */
 	@Operation(summary = "Contar usuarios", description = """
-				Este endpoint devuelve el número total de usuarios registrados.
+			Este endpoint devuelve el número total de usuarios registrados.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Conteo exitoso", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "5"))),
@@ -271,9 +272,9 @@ public class UsuarioController {
 	 * @return ResponseEntity con true si existe, false si no
 	 */
 	@Operation(summary = "Verificar existencia de usuario", description = """
-				Este endpoint permite verificar si existe un usuario con el ID especificado.
+			Este endpoint permite verificar si existe un usuario con el ID especificado.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Usuario encontrado", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "true"))),
@@ -293,13 +294,12 @@ public class UsuarioController {
 	 * Obtiene un usuario por su ID. Requiere rol ADMIN.
 	 *
 	 * @param id ID del usuario a buscar
-	 * @return ResponseEntity con el usuario encontrado o un objeto vacío si no
-	 *         existe
+	 * @return ResponseEntity con el usuario encontrado o un objeto vacío si no existe
 	 */
 	@Operation(summary = "Obtener usuario por ID", description = """
-				Este endpoint permite obtener la información de un usuario mediante su ID.
+			Este endpoint permite obtener la información de un usuario mediante su ID.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Usuario encontrado", content = @Content(mediaType = "application/json", schema = @Schema(implementation = UsuarioDTO.class))),
@@ -323,9 +323,9 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Actualizar usuario (JSON)", description = """
-				Este endpoint permite al administrador corregir el nombre, apellido y teléfono de un usuario.
+			Este endpoint permite al administrador corregir el nombre, apellido y teléfono de un usuario.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Usuario actualizado correctamente", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Usuario actualizado exitosamente"))),
@@ -358,11 +358,11 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Asignar unidad", description = """
-				Este endpoint asigna una unidad (apartamento o casa) a un residente.
+			Este endpoint asigna una unidad (apartamento o casa) a un residente.
 
-				**¿Qué hace?** El residente queda en el conjunto de la unidad y ya puede reservar e inscribirse a eventos.
+			**¿Qué hace?** El residente queda en el conjunto de la unidad y ya puede reservar e inscribirse a eventos.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Unidad asignada", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Unidad asignada exitosamente"))),
@@ -393,11 +393,11 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Cambiar estado de usuario", description = """
-				Este endpoint activa o desactiva la cuenta de un residente.
+			Este endpoint activa o desactiva la cuenta de un residente.
 
-				**¿Qué hace?** Una cuenta desactivada no puede iniciar sesión y pierde el acceso aunque tenga un token vigente.
+			**¿Qué hace?** Una cuenta desactivada no puede iniciar sesión y pierde el acceso aunque tenga un token vigente.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Estado cambiado", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "La cuenta quedó desactivada."))),
@@ -427,13 +427,13 @@ public class UsuarioController {
 	 * @return ResponseEntity con mensaje de éxito o error
 	 */
 	@Operation(summary = "Eliminar usuario por ID", description = """
-				Este endpoint permite eliminar un residente mediante su ID.
+			Este endpoint permite eliminar un residente mediante su ID.
 
-				**¿Qué hace?** Elimina el usuario, sus reservas y su asistencia a eventos.
+			**¿Qué hace?** Elimina el usuario, sus reservas y su asistencia a eventos.
 
-				**Advertencia:** Esta acción no se puede deshacer. Las cuentas de administrador no se pueden eliminar.
+			**Advertencia:** Esta acción no se puede deshacer. Las cuentas de administrador no se pueden eliminar.
 
-				**Nota:** Este endpoint requiere autenticación y rol ADMIN.
+			**Nota:** Este endpoint requiere autenticación y rol ADMIN.
 			""")
 	@ApiResponses(value = {
 			@ApiResponse(responseCode = "202", description = "Usuario eliminado correctamente", content = @Content(mediaType = "text/plain", examples = @ExampleObject(value = "Usuario eliminado exitosamente"))),
