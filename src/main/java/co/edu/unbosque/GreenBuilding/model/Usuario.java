@@ -1,5 +1,7 @@
 package co.edu.unbosque.GreenBuilding.model;
 
+import co.edu.unbosque.GreenBuilding.util.TextoUtil;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -180,7 +182,14 @@ public class Usuario implements UserDetails {
 	 * @return Nombre completo
 	 */
 	public String getNombreCompleto() {
-		return ((nombre == null ? "" : nombre) + " " + (apellido == null ? "" : apellido)).trim();
+		String completo = "";
+		if (nombre != null) {
+			completo = nombre;
+		}
+		if (apellido != null) {
+			completo = completo + " " + apellido;
+		}
+		return completo.trim();
 	}
 
 	/**
@@ -501,13 +510,10 @@ public class Usuario implements UserDetails {
 	 */
 	public List<String> interesesComoLista() {
 		List<String> lista = new ArrayList<>();
-		if (interesesGuardados == null || interesesGuardados.isBlank()) {
+		if (TextoUtil.vacio(interesesGuardados)) {
 			return lista;
 		}
-		for (String interes : interesesGuardados.split(",")) {
-			lista.add(interes);
-		}
-		return lista;
+		return TextoUtil.separarPorComas(interesesGuardados);
 	}
 
 	/**

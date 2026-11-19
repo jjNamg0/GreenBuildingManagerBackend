@@ -9,46 +9,46 @@ import co.edu.unbosque.GreenBuilding.dto.RutaOsrmDTO;
 import co.edu.unbosque.GreenBuilding.dto.TramoOsrmDTO;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que calcula rutas con el servidor público de OSRM. Invierte los
- * puntos de [lng, lat] a [lat, lng] y escribe las instrucciones en español.
+ * Servicio que calcula rutas con el servidor público de OSRM. Invierte los puntos de [lng, lat] a
+ * [lat, lng] y escribe las instrucciones en español.
  */
 @Service
 public class RutaService {
 
 	/** Modos de transporte que acepta el servicio. */
-	private static final String[] MODOS = { "CARRO", "CAMINANDO", "BICICLETA" };
+	private static final String[] MODOS = {"CARRO", "CAMINANDO", "BICICLETA"};
 
 	/** Perfil de OSRM de cada modo de transporte, en el mismo orden que MODOS. */
-	private static final String[] PERFILES = { "car", "foot", "bike" };
+	private static final String[] PERFILES = {"car", "foot", "bike"};
 
-	/**
-	 * Modificadores de giro de OSRM y su texto en español: cada fila es
-	 * {modificador, texto}.
-	 */
-	private static final String[][] DIRECCIONES = { { "left", "a la izquierda" }, { "right", "a la derecha" },
-			{ "slight left", "levemente a la izquierda" }, { "slight right", "levemente a la derecha" },
-			{ "sharp left", "fuertemente a la izquierda" }, { "sharp right", "fuertemente a la derecha" },
-			{ "straight", "derecho" }, { "uturn", "en U" } };
+	/** Modificadores de giro de OSRM y su texto en español: cada fila es {modificador, texto}. */
+	private static final String[][] DIRECCIONES = {
+		{"left", "a la izquierda"},
+		{"right", "a la derecha"},
+		{"slight left", "levemente a la izquierda"},
+		{"slight right", "levemente a la derecha"},
+		{"sharp left", "fuertemente a la izquierda"},
+		{"sharp right", "fuertemente a la derecha"},
+		{"straight", "derecho"},
+		{"uturn", "en U"}
+	};
 
 	/** URL base del servidor OSRM. */
 	@Value("${app.ruta.url:https://routing.openstreetmap.de}")
 	private String urlBase;
 
 	/**
-	 * API key del servidor de rutas. Si está vacía, la consulta se hace sin API
-	 * key.
+	 * API key del servidor de rutas. Si está vacía, la consulta se hace sin API key.
 	 */
 	@Value("${app.ruta.apikey:}")
 	private String apiKey;
 
 	/** Constructor por defecto. */
-	public RutaService() {
-	}
+	public RutaService() {}
 
 	/**
 	 * Indica si un modo de transporte es uno de los que acepta el servicio.
@@ -56,7 +56,7 @@ public class RutaService {
 	 * @param modo Modo de transporte en mayúsculas
 	 * @return true si es CARRO, CAMINANDO o BICICLETA
 	 */
-	public static boolean esModoValido(String modo) {
+	public boolean esModoValido(String modo) {
 		for (String valido : MODOS) {
 			if (valido.equals(modo)) {
 				return true;
@@ -96,34 +96,49 @@ public class RutaService {
 	}
 
 	/**
-	 * Consulta la URL enviando la API key en la cabecera cuando hay una
-	 * configurada, y convierte la respuesta en el DTO de OSRM.
+	 * Consulta la URL enviando la API key en la cabecera cuando hay una configurada, y convierte la
+	 * respuesta en el DTO de OSRM.
 	 *
 	 * @param url URL a consultar
 	 * @return Respuesta de OSRM, o null si la petición falló
 	 */
 	private RespuestaOsrmDTO consultar(String url) {
-		if (apiKey == null || apiKey.isBlank()) {
+		if (apiKey == null || apiKey.trim().isEmpty()) {
 			return ExternalHTTPRequestHandler.doGetAndConvertToDto(url, RespuestaOsrmDTO.class);
 		}
-		return ExternalHTTPRequestHandler.doGetWithHeadersAndConvertToDto(url, apiKey.trim(), RespuestaOsrmDTO.class);
+		return ExternalHTTPRequestHandler.doGetWithHeadersAndConvertToDto(
+				url, apiKey.trim(), RespuestaOsrmDTO.class);
 	}
 
 	/**
 	 * Calcula la ruta entre dos puntos.
 	 *
-	 * @param origenLatitud   Latitud de origen
-	 * @param origenLongitud  Longitud de origen
-	 * @param destinoLatitud  Latitud de destino
+	 * @param origenLatitud Latitud de origen
+	 * @param origenLongitud Longitud de origen
+	 * @param destinoLatitud Latitud de destino
 	 * @param destinoLongitud Longitud de destino
-	 * @param modo            CARRO, CAMINANDO o BICICLETA
+	 * @param modo CARRO, CAMINANDO o BICICLETA
 	 * @return La ruta, o null si no se encontró o el servicio falló
 	 */
-	public RutaDTO calcular(double origenLatitud, double origenLongitud, double destinoLatitud, double destinoLongitud,
+	public RutaDTO calcular(
+			double origenLatitud,
+			double origenLongitud,
+			double destinoLatitud,
+			double destinoLongitud,
 			String modo) {
-		String url = String.format(Locale.ROOT,
-				"%s/routed-%s/route/v1/driving/%.6f,%.6f;%.6f,%.6f?overview=full&geometries=geojson&steps=true",
-				urlBase, perfil(modo), origenLongitud, origenLatitud, destinoLongitud, destinoLatitud);
+		String url =
+				urlBase
+						+ "/routed-"
+						+ perfil(modo)
+						+ "/route/v1/driving/"
+						+ origenLongitud
+						+ ","
+						+ origenLatitud
+						+ ";"
+						+ destinoLongitud
+						+ ","
+						+ destinoLatitud
+						+ "?overview=full&geometries=geojson&steps=true";
 		try {
 			RespuestaOsrmDTO respuesta = consultar(url);
 			if (respuesta == null) {
@@ -137,8 +152,7 @@ public class RutaService {
 	}
 
 	/**
-	 * Convierte la respuesta de OSRM en una ruta, con los puntos como [latitud,
-	 * longitud].
+	 * Convierte la respuesta de OSRM en una ruta, con los puntos como [latitud, longitud].
 	 *
 	 * @param respuesta Respuesta de OSRM
 	 * @return La ruta, o null si OSRM no encontró ruta
@@ -151,7 +165,7 @@ public class RutaService {
 		RutaOsrmDTO ruta = rutas.get(0);
 		List<double[]> puntos = new ArrayList<>();
 		for (double[] punto : ruta.getGeometry().getCoordinates()) {
-			puntos.add(new double[] { punto[1], punto[0] });
+			puntos.add(new double[] {punto[1], punto[0]});
 		}
 		List<PasoRutaDTO> pasos = new ArrayList<>();
 		for (TramoOsrmDTO tramo : ruta.getLegs()) {
@@ -173,17 +187,25 @@ public class RutaService {
 		String tipo = texto(maniobra.getType());
 		String direccion = direccion(texto(maniobra.getModifier()));
 		String via = texto(paso.getName());
-		String porVia = via.isEmpty() ? "" : " por " + via;
+		String porVia = "";
+		String enVia = "";
+		if (!via.isEmpty()) {
+			porVia = " por " + via;
+			enVia = " en " + via;
+		}
 		String instruccion;
 		if (tipo.equals("depart")) {
 			instruccion = "Sal" + porVia;
 		} else if (tipo.equals("arrive")) {
 			instruccion = "Llegaste a tu destino";
 		} else if (tipo.equals("roundabout") || tipo.equals("rotary")) {
-			int salida = maniobra.getExit() == null ? 1 : maniobra.getExit();
+			int salida = 1;
+			if (maniobra.getExit() != null) {
+				salida = maniobra.getExit();
+			}
 			instruccion = "En la glorieta toma la salida " + salida + porVia;
 		} else if (tipo.equals("turn") || tipo.equals("end of road")) {
-			instruccion = "Gira " + direccion + (via.isEmpty() ? "" : " en " + via);
+			instruccion = "Gira " + direccion + enVia;
 		} else if (tipo.equals("fork")) {
 			instruccion = "En la bifurcación mantente " + direccion + porVia;
 		} else if (tipo.equals("merge")) {
@@ -203,6 +225,9 @@ public class RutaService {
 	 * @return El texto, o vacío si no venía
 	 */
 	private String texto(String valor) {
-		return valor == null ? "" : valor;
+		if (valor == null) {
+			return "";
+		}
+		return valor;
 	}
 }

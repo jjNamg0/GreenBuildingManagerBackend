@@ -33,7 +33,10 @@ public class FechaUtil {
 	 * @return Hora en texto, o null si la hora es nula
 	 */
 	public static String hora(LocalTime hora) {
-		return hora == null ? null : hora.format(HORA);
+		if (hora == null) {
+			return null;
+		}
+		return hora.format(HORA);
 	}
 
 	/**
@@ -43,7 +46,10 @@ public class FechaUtil {
 	 * @return Fecha en texto, o null si la fecha es nula
 	 */
 	public static String fecha(LocalDate fecha) {
-		return fecha == null ? null : fecha.toString();
+		if (fecha == null) {
+			return null;
+		}
+		return fecha.toString();
 	}
 
 	/**
@@ -53,7 +59,10 @@ public class FechaUtil {
 	 * @return Fecha y hora en texto, o null si es nula
 	 */
 	public static String fechaHora(LocalDateTime fechaHora) {
-		return fechaHora == null ? null : fechaHora.withNano(0).toString();
+		if (fechaHora == null) {
+			return null;
+		}
+		return fechaHora.withNano(0).toString();
 	}
 
 	/**

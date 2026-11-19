@@ -16,18 +16,17 @@ import co.edu.unbosque.GreenBuilding.repository.EventoRepository;
 import co.edu.unbosque.GreenBuilding.repository.ReservaRepository;
 import co.edu.unbosque.GreenBuilding.repository.UsuarioRepository;
 import co.edu.unbosque.GreenBuilding.util.DistanciaUtil;
+import co.edu.unbosque.GreenBuilding.util.FechaUtil;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que calcula recomendaciones: eventos y espacios para el residente
- * según sus intereses e historial, y conjuntos cercanos a la ubicación de un
- * visitante.
+ * Servicio que calcula recomendaciones: eventos y espacios para el residente según sus intereses e
+ * historial, y conjuntos cercanos a la ubicación de un visitante.
  */
 @Service
 public class RecomendacionService {
@@ -57,63 +56,54 @@ public class RecomendacionService {
 	private static final int DIAS_PRONTO = 7;
 
 	/**
-	 * Interés relacionado con cada tipo de evento, en el mismo orden del enum
-	 * Evento.Tipo: FIESTA, INFANTIL, DEPORTIVO, CULTURAL, ASAMBLEA y OTRO (que no
+	 * Interés relacionado con cada tipo de evento, en el mismo orden del enum Evento.Tipo: FIESTA,
+	 * INFANTIL, DEPORTIVO, CULTURAL, ASAMBLEA y OTRO (que no tiene interés relacionado).
+	 */
+	private static final String[] INTERES_POR_EVENTO = {
+		"FIESTAS", "NINOS", "DEPORTE", "CULTURA", "ASAMBLEAS", null
+	};
+
+	/**
+	 * Interés relacionado con cada tipo de espacio, en el mismo orden del enum Espacio.Tipo:
+	 * SALON_SOCIAL, PARQUE, PISCINA, GIMNASIO, BBQ, CANCHA, ZONA_INFANTIL, ZONA_HUMEDA y OTRO (que no
 	 * tiene interés relacionado).
 	 */
-	private static final String[] INTERES_POR_EVENTO = { "FIESTAS", "NINOS", "DEPORTE", "CULTURA", "ASAMBLEAS", null };
-
-	/**
-	 * Interés relacionado con cada tipo de espacio, en el mismo orden del enum
-	 * Espacio.Tipo: SALON_SOCIAL, PARQUE, PISCINA, GIMNASIO, BBQ, CANCHA,
-	 * ZONA_INFANTIL, ZONA_HUMEDA y OTRO (que no tiene interés relacionado).
-	 */
-	private static final String[] INTERES_POR_ESPACIO = { "FIESTAS", "NATURALEZA", "PISCINA", "GIMNASIO", "BBQ",
-			"DEPORTE", "NINOS", "PISCINA", null };
+	private static final String[] INTERES_POR_ESPACIO = {
+		"FIESTAS", "NATURALEZA", "PISCINA", "GIMNASIO", "BBQ", "DEPORTE", "NINOS", "PISCINA", null
+	};
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Repositorio para acceder a los eventos. */
-	@Autowired
-	private EventoRepository eventoRepo;
+	@Autowired private EventoRepository eventoRepo;
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired
-	private EspacioRepository espacioRepo;
+	@Autowired private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired
-	private ReservaRepository reservaRepo;
+	@Autowired private ReservaRepository reservaRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired
-	private ConjuntoRepository conjuntoRepo;
+	@Autowired private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a las asistencias a eventos. */
-	@Autowired
-	private AsistenciaRepository asistenciaRepo;
+	@Autowired private AsistenciaRepository asistenciaRepo;
 
 	/** Servicio de eventos, para convertir eventos en DTO. */
-	@Autowired
-	private EventoService eventoServ;
+	@Autowired private EventoService eventoServ;
 
 	/** Servicio de conjuntos, para convertir conjuntos en DTO. */
-	@Autowired
-	private ConjuntoService conjuntoServ;
+	@Autowired private ConjuntoService conjuntoServ;
 
 	/** Servicio de espacios, para convertir espacios en DTO. */
-	@Autowired
-	private EspacioService espacioServ;
+	@Autowired private EspacioService espacioServ;
 
 	/** Constructor por defecto. */
-	public RecomendacionService() {
-	}
+	public RecomendacionService() {}
 
 	/**
-	 * Recomienda eventos próximos del conjunto del residente a los que aún no se
-	 * inscribió.
+	 * Recomienda eventos próximos del conjunto del residente a los que aún no se inscribió.
 	 *
 	 * @param username Correo del residente
 	 * @return Lista de recomendaciones ordenadas por puntaje
@@ -133,12 +123,17 @@ public class RecomendacionService {
 			}
 		}
 		for (Evento evento : eventoServ.proximosDelConjunto(usuario.getConjuntoId())) {
-			boolean inscrito = asistenciaRepo.findByEventoIdAndUsuarioId(evento.getId(), usuario.getId()).isPresent();
+			boolean inscrito =
+					asistenciaRepo.findByEventoIdAndUsuarioId(evento.getId(), usuario.getId()).isPresent();
 			if (!inscrito && !eventoServ.estaLleno(evento)) {
 				insertarEvento(recomendaciones, puntuarEvento(evento, usuario, tiposAsistidos));
 			}
 		}
-		return new ArrayList<>(recomendaciones.subList(0, Math.min(MAXIMO_RESULTADOS, recomendaciones.size())));
+		List<RecomendacionEventoDTO> resultado = new ArrayList<>();
+		for (int i = 0; i < recomendaciones.size() && i < MAXIMO_RESULTADOS; i++) {
+			resultado.add(recomendaciones.get(i));
+		}
+		return resultado;
 	}
 
 	/**
@@ -165,28 +160,58 @@ public class RecomendacionService {
 				insertarEspacio(recomendaciones, puntuarEspacio(espacio, usuario, reservados));
 			}
 		}
-		return new ArrayList<>(recomendaciones.subList(0, Math.min(MAXIMO_RESULTADOS, recomendaciones.size())));
+		List<RecomendacionEspacioDTO> resultado = new ArrayList<>();
+		for (int i = 0; i < recomendaciones.size() && i < MAXIMO_RESULTADOS; i++) {
+			resultado.add(recomendaciones.get(i));
+		}
+		return resultado;
 	}
 
 	/**
 	 * Recomienda los conjuntos más cercanos a una ubicación.
 	 *
-	 * @param latitud  Latitud del visitante
+	 * @param latitud Latitud del visitante
 	 * @param longitud Longitud del visitante
 	 * @return Lista de conjuntos ordenados por distancia
 	 */
 	public List<RecomendacionConjuntoDTO> getConjuntosCercanos(double latitud, double longitud) {
 		List<RecomendacionConjuntoDTO> recomendaciones = new ArrayList<>();
 		for (Conjunto conjunto : conjuntoRepo.findAll()) {
-			double distancia = DistanciaUtil.redondear(
-					DistanciaUtil.kilometros(latitud, longitud, conjunto.getLatitud(), conjunto.getLongitud()));
-			String tipo = conjunto.getTipo() == Conjunto.Tipo.CASAS ? "Conjunto de casas" : "Conjunto de apartamentos";
-			String motivo = tipo + " a " + String.format(Locale.forLanguageTag("es-CO"), "%.1f", distancia)
-					+ " km de ti, en " + conjunto.getMunicipio();
-			insertarConjunto(recomendaciones,
-					new RecomendacionConjuntoDTO(conjuntoServ.aDTO(conjunto), distancia, motivo));
+			double distancia =
+					DistanciaUtil.redondear(
+							DistanciaUtil.kilometros(latitud, longitud, conjunto.getLatitud(), conjunto.getLongitud()));
+			String tipo = "Conjunto de apartamentos";
+			if (conjunto.getTipo() == Conjunto.Tipo.CASAS) {
+				tipo = "Conjunto de casas";
+			}
+			String motivo =
+					tipo
+							+ " a "
+							+ (long) distancia
+							+ ","
+							+ (int) ((distancia - (long) distancia) * 10 + 0.5)
+							+ " km de ti, en "
+							+ conjunto.getMunicipio();
+			insertarConjunto(recomendaciones, new RecomendacionConjuntoDTO(conjuntoServ.aDTO(conjunto), distancia, motivo));
 		}
-		return new ArrayList<>(recomendaciones.subList(0, Math.min(MAXIMO_CONJUNTOS, recomendaciones.size())));
+		List<RecomendacionConjuntoDTO> resultado = new ArrayList<>();
+		for (int i = 0; i < recomendaciones.size() && i < MAXIMO_CONJUNTOS; i++) {
+			resultado.add(recomendaciones.get(i));
+		}
+		return resultado;
+	}
+
+	/**
+	 * Deja el puntaje de una recomendación en máximo 100.
+	 *
+	 * @param puntaje Puntaje calculado
+	 * @return El puntaje, con máximo 100
+	 */
+	private int limitarPuntaje(int puntaje) {
+		if (puntaje > 100) {
+			return 100;
+		}
+		return puntaje;
 	}
 
 	/**
@@ -198,14 +223,18 @@ public class RecomendacionService {
 	private String unirMotivos(List<String> motivos) {
 		String texto = "";
 		for (int i = 0; i < motivos.size(); i++) {
-			texto = i == 0 ? motivos.get(i) : texto + " · " + motivos.get(i);
+			if (i == 0) {
+				texto = motivos.get(i);
+			} else {
+				texto = texto + " · " + motivos.get(i);
+			}
 		}
 		return texto;
 	}
 
 	/**
-	 * Agrega una recomendación de evento en su lugar: primero el mayor puntaje y,
-	 * con el mismo puntaje, la fecha más próxima.
+	 * Agrega una recomendación de evento en su lugar: primero el mayor puntaje y, con el mismo
+	 * puntaje, la fecha más próxima.
 	 *
 	 * @param lista Lista ya ordenada
 	 * @param nueva Recomendación a agregar
@@ -215,8 +244,10 @@ public class RecomendacionService {
 		for (int i = 0; i < lista.size() && posicion == lista.size(); i++) {
 			RecomendacionEventoDTO actual = lista.get(i);
 			boolean mayorPuntaje = nueva.getPuntaje() > actual.getPuntaje();
-			boolean masPronto = nueva.getPuntaje() == actual.getPuntaje()
-					&& nueva.getEvento().getFecha().compareTo(actual.getEvento().getFecha()) < 0;
+			boolean masPronto =
+					nueva.getPuntaje() == actual.getPuntaje()
+							&& FechaUtil.leerFecha(nueva.getEvento().getFecha())
+									.isBefore(FechaUtil.leerFecha(actual.getEvento().getFecha()));
 			if (mayorPuntaje || masPronto) {
 				posicion = i;
 			}
@@ -261,15 +292,19 @@ public class RecomendacionService {
 	/**
 	 * Calcula el puntaje y el motivo de un evento para un residente.
 	 *
-	 * @param evento         Evento a puntuar
-	 * @param usuario        Residente
+	 * @param evento Evento a puntuar
+	 * @param usuario Residente
 	 * @param tiposAsistidos Tipos de eventos a los que ya asistió
 	 * @return Recomendación del evento
 	 */
-	private RecomendacionEventoDTO puntuarEvento(Evento evento, Usuario usuario, List<Evento.Tipo> tiposAsistidos) {
+	private RecomendacionEventoDTO puntuarEvento(
+			Evento evento, Usuario usuario, List<Evento.Tipo> tiposAsistidos) {
 		int puntaje = PUNTAJE_BASE;
 		List<String> motivos = new ArrayList<>();
-		String interes = evento.getTipo() == null ? null : INTERES_POR_EVENTO[evento.getTipo().ordinal()];
+		String interes = null;
+		if (evento.getTipo() != null) {
+			interes = INTERES_POR_EVENTO[evento.getTipo().ordinal()];
+		}
 		if (interes != null && usuario.interesesComoLista().contains(interes)) {
 			puntaje += PUNTAJE_INTERES;
 			motivos.add("Coincide con tus intereses");
@@ -286,22 +321,28 @@ public class RecomendacionService {
 			puntaje += PUNTAJE_EXTRA;
 			motivos.add("Es esta semana");
 		}
-		String motivo = motivos.isEmpty() ? "Próximo evento en tu conjunto" : unirMotivos(motivos);
-		return new RecomendacionEventoDTO(eventoServ.aDTO(evento, usuario), Math.min(puntaje, 100), motivo);
+		String motivo = "Próximo evento en tu conjunto";
+		if (!motivos.isEmpty()) {
+			motivo = unirMotivos(motivos);
+		}
+		return new RecomendacionEventoDTO(eventoServ.aDTO(evento, usuario), limitarPuntaje(puntaje), motivo);
 	}
 
 	/**
 	 * Calcula el puntaje y el motivo de un espacio para un residente.
 	 *
-	 * @param espacio    Espacio a puntuar
-	 * @param usuario    Residente
+	 * @param espacio Espacio a puntuar
+	 * @param usuario Residente
 	 * @param reservados IDs de los espacios que ya reservó
 	 * @return Recomendación del espacio
 	 */
 	private RecomendacionEspacioDTO puntuarEspacio(Espacio espacio, Usuario usuario, List<Long> reservados) {
 		int puntaje = PUNTAJE_BASE;
 		List<String> motivos = new ArrayList<>();
-		String interes = espacio.getTipo() == null ? null : INTERES_POR_ESPACIO[espacio.getTipo().ordinal()];
+		String interes = null;
+		if (espacio.getTipo() != null) {
+			interes = INTERES_POR_ESPACIO[espacio.getTipo().ordinal()];
+		}
 		if (interes != null && usuario.interesesComoLista().contains(interes)) {
 			puntaje += PUNTAJE_INTERES;
 			motivos.add("Coincide con tus intereses");
@@ -314,7 +355,11 @@ public class RecomendacionService {
 			puntaje += PUNTAJE_EXTRA;
 			motivos.add("Es de uso libre");
 		}
-		String motivo = motivos.isEmpty() ? "Espacio disponible en tu conjunto" : unirMotivos(motivos);
-		return new RecomendacionEspacioDTO(espacioServ.aDTO(espacio), Math.min(puntaje, 100), motivo);
+		String motivo = "Espacio disponible en tu conjunto";
+		if (!motivos.isEmpty()) {
+			motivo = unirMotivos(motivos);
+		}
+		return new RecomendacionEspacioDTO(
+				espacioServ.aDTO(espacio), limitarPuntaje(puntaje), motivo);
 	}
 }

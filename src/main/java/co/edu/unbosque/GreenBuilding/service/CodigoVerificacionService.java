@@ -12,9 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que genera, envía y valida los códigos de 6 dígitos para verificar
- * la cuenta y para restablecer la contraseña. Cada código vence en 15 minutos y
- * admite 5 intentos.
+ * Servicio que genera, envía y valida los códigos de 6 dígitos para verificar la cuenta y para
+ * restablecer la contraseña. Cada código vence en 15 minutos y admite 5 intentos.
  */
 @Service
 public class CodigoVerificacionService {
@@ -32,37 +31,41 @@ public class CodigoVerificacionService {
 	private final SecureRandom aleatorio = new SecureRandom();
 
 	/** Repositorio para acceder a los códigos. */
-	@Autowired
-	private CodigoVerificacionRepository codigoRepo;
+	@Autowired private CodigoVerificacionRepository codigoRepo;
 
 	/** Servicio para enviar el código por correo. */
-	@Autowired
-	private CorreoService correoServ;
+	@Autowired private CorreoService correoServ;
 
 	/** Constructor por defecto. */
-	public CodigoVerificacionService() {
-	}
+	public CodigoVerificacionService() {}
 
 	/**
-	 * Genera un código nuevo, borra los anteriores del mismo propósito y lo envía
-	 * al correo.
+	 * Genera un código nuevo, borra los anteriores del mismo propósito y lo envía al correo.
 	 *
-	 * @param usuario   Usuario que recibe el código
+	 * @param usuario Usuario que recibe el código
 	 * @param proposito Para qué sirve el código
-	 * @return 0 si el código se envió, 1 si debe esperar un minuto para pedir otro,
-	 *         2 si el correo no se pudo enviar
+	 * @return 0 si el código se envió, 1 si debe esperar un minuto para pedir otro, 2 si el correo
+	 *     no se pudo enviar
 	 */
 	public int generarYEnviar(Usuario usuario, Proposito proposito) {
-		Optional<CodigoVerificacion> anterior = codigoRepo
-				.findFirstByUsernameAndPropositoOrderByIdDesc(usuario.getUsername(), proposito);
-		LocalDateTime limite = LocalDateTime.now().plusMinutes(MINUTOS_VIGENCIA).minusSeconds(SEGUNDOS_ENTRE_ENVIOS);
+		Optional<CodigoVerificacion> anterior =
+				codigoRepo.findFirstByUsernameAndPropositoOrderByIdDesc(usuario.getUsername(), proposito);
+		LocalDateTime limite =
+				LocalDateTime.now().plusMinutes(MINUTOS_VIGENCIA).minusSeconds(SEGUNDOS_ENTRE_ENVIOS);
 		if (anterior.isPresent() && anterior.get().getExpiracion().isAfter(limite)) {
 			return 1;
 		}
 		codigoRepo.deleteByUsernameAndProposito(usuario.getUsername(), proposito);
-		String codigo = String.format("%06d", aleatorio.nextInt(1_000_000));
-		codigoRepo.save(new CodigoVerificacion(usuario.getUsername(), codigo, proposito,
-				LocalDateTime.now().plusMinutes(MINUTOS_VIGENCIA)));
+		String codigo = "";
+		for (int i = 0; i < 6; i++) {
+			codigo = codigo + aleatorio.nextInt(10);
+		}
+		codigoRepo.save(
+				new CodigoVerificacion(
+						usuario.getUsername(),
+						codigo,
+						proposito,
+						LocalDateTime.now().plusMinutes(MINUTOS_VIGENCIA)));
 		if (correoServ.enviarCodigo(usuario, codigo, proposito)) {
 			return 0;
 		} else {
@@ -71,18 +74,17 @@ public class CodigoVerificacionService {
 	}
 
 	/**
-	 * Valida el código que escribió el usuario. Si es incorrecto, suma un intento
-	 * fallido.
+	 * Valida el código que escribió el usuario. Si es incorrecto, suma un intento fallido.
 	 *
-	 * @param username        Correo del usuario
+	 * @param username Correo del usuario
 	 * @param codigoIngresado Código escrito por el usuario
-	 * @param proposito       Para qué sirve el código
-	 * @return 0 si el código es correcto, 2 si es incorrecto, 3 si venció, 4 si
-	 *         superó los intentos, 5 si no tiene un código activo
+	 * @param proposito Para qué sirve el código
+	 * @return 0 si el código es correcto, 2 si es incorrecto, 3 si venció, 4 si superó los
+	 *     intentos, 5 si no tiene un código activo
 	 */
 	public int validar(String username, String codigoIngresado, Proposito proposito) {
-		Optional<CodigoVerificacion> found = codigoRepo.findFirstByUsernameAndPropositoOrderByIdDesc(username,
-				proposito);
+		Optional<CodigoVerificacion> found =
+				codigoRepo.findFirstByUsernameAndPropositoOrderByIdDesc(username, proposito);
 		if (!found.isPresent()) {
 			return 5;
 		}
@@ -104,7 +106,7 @@ public class CodigoVerificacionService {
 	/**
 	 * Elimina los códigos de un usuario para un propósito.
 	 *
-	 * @param username  Correo del usuario
+	 * @param username Correo del usuario
 	 * @param proposito Propósito de los códigos
 	 */
 	public void eliminar(String username, Proposito proposito) {
