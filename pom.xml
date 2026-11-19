@@ -12,7 +12,7 @@
 	<groupId>co.edu.unbosque</groupId>
 	<artifactId>GreenBuilding</artifactId>
 	<version>1.0</version>
-	<packaging>jar</packaging>
+	<packaging>war</packaging>
 	<name>GreenBuilding</name>
 	<description>Back de Green Building Manager</description>
 	<properties>
