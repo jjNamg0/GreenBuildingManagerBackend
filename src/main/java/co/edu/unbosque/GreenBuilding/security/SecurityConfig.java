@@ -64,7 +64,7 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable()).cors(Customizer.withDefaults()).authorizeHttpRequests(auth -> auth
 				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 				.requestMatchers("/auth/**", "/conjunto/getall", "/ruta/**", "/recomendacion/getconjuntoscercanos",
-						"/error")
+						"/invitacion/getbycodigo/**", "/error")
 				.permitAll().requestMatchers("/", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
 				.requestMatchers("/user/getall", "/user/count", "/user/exists/**", "/user/getbyid/**",
 						"/user/updatejson", "/user/asignarunidad", "/user/cambiarestado", "/user/deletebyid/**")
@@ -81,11 +81,15 @@ public class SecurityConfig {
 						"/reserva/cancelar/**")
 				.hasRole(USER)
 				.requestMatchers("/evento/getall", "/evento/count", "/evento/createjson", "/evento/updatejson",
-						"/evento/cancelar/**", "/evento/deletebyid/**", "/evento/enviarinvitacion/**",
-						"/evento/vistaprevia")
+						"/evento/cancelar/**", "/evento/deletebyid/**", "/evento/vistaprevia")
 				.hasRole(ADMIN).requestMatchers("/evento/asistir/**", "/evento/noasistir/**").hasRole(USER)
-				.requestMatchers("/recomendacion/**").hasRole(USER).requestMatchers("/auditoria/**", "/resumen/**")
-				.hasRole(ADMIN).anyRequest().authenticated())
+				.requestMatchers("/invitacion/getenlaceevento/**", "/invitacion/enviarevento/**",
+						"/invitacion/getinvitadosevento/**")
+				.hasRole(ADMIN)
+				.requestMatchers("/invitacion/getenlacereserva/**", "/invitacion/enviarreserva/**",
+						"/invitacion/getinvitadosreserva/**")
+				.hasRole(USER).requestMatchers("/recomendacion/**").hasRole(USER)
+				.requestMatchers("/auditoria/**", "/resumen/**").hasRole(ADMIN).anyRequest().authenticated())
 				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
 				.exceptionHandling(errores -> errores.authenticationEntryPoint((request, response, e) -> {
 					response.setStatus(401);

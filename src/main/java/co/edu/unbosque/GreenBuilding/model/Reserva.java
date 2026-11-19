@@ -1,3 +1,4 @@
+
 package co.edu.unbosque.GreenBuilding.model;
 
 import java.time.LocalDate;
@@ -26,7 +27,9 @@ public class Reserva {
 	/**
 	 * Identificador único de la reserva.
 	 */
-	private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id;
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
+	private Long id;
 
 	/**
 	 * Identificador del espacio reservado.
@@ -84,6 +87,12 @@ public class Reserva {
 	private LocalDateTime fechaCreacion;
 
 	/**
+	 * Código único de invitación para acceder al enlace público de la reserva.
+	 */
+	@Column(unique = true)
+	private String codigoInvitacion;
+
+	/**
 	 * Constructor por defecto. La reserva empieza en estado PENDIENTE.
 	 */
 	public Reserva() {
@@ -97,10 +106,13 @@ public class Reserva {
 	public enum Estado {
 		/** Esperando revisión del administrador */
 		PENDIENTE,
+
 		/** Aprobada por el administrador */
 		APROBADA,
+
 		/** Rechazada por el administrador */
 		RECHAZADA,
+
 		/** Cancelada por el residente */
 		CANCELADA
 	}
@@ -118,7 +130,7 @@ public class Reserva {
 	 * Indica si la reserva se cruza con un rango de horas del mismo día.
 	 *
 	 * @param inicio Hora de inicio del rango
-	 * @param fin Hora de fin del rango
+	 * @param fin    Hora de fin del rango
 	 * @return true si hay cruce
 	 */
 	public boolean seCruzaCon(LocalTime inicio, LocalTime fin) {
@@ -333,6 +345,24 @@ public class Reserva {
 	}
 
 	/**
+	 * Obtiene el código de invitación de la reserva.
+	 *
+	 * @return El código de invitación
+	 */
+	public String getCodigoInvitacion() {
+		return codigoInvitacion;
+	}
+
+	/**
+	 * Establece el código de invitación de la reserva.
+	 *
+	 * @param codigoInvitacion El nuevo código de invitación
+	 */
+	public void setCodigoInvitacion(String codigoInvitacion) {
+		this.codigoInvitacion = codigoInvitacion;
+	}
+
+	/**
 	 * Calcula el código hash para esta reserva.
 	 *
 	 * @return El código hash calculado
@@ -356,7 +386,9 @@ public class Reserva {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
+
 		Reserva other = (Reserva) obj;
+
 		return Objects.equals(id, other.id) && Objects.equals(fecha, other.fecha)
 				&& Objects.equals(horaInicio, other.horaInicio) && Objects.equals(horaFin, other.horaFin);
 	}
@@ -371,5 +403,4 @@ public class Reserva {
 		return "Reserva [id=" + id + ", fecha=" + fecha + ", horaInicio=" + horaInicio + ", horaFin=" + horaFin
 				+ ", estado=" + estado + "]";
 	}
-
 }

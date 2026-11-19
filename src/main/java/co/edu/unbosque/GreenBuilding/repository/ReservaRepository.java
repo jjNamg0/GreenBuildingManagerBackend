@@ -2,6 +2,7 @@ package co.edu.unbosque.GreenBuilding.repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -9,9 +10,9 @@ import co.edu.unbosque.GreenBuilding.model.Reserva;
 import co.edu.unbosque.GreenBuilding.model.Reserva.Estado;
 
 /**
- * Repositorio para la entidad Reserva.
- * Proporciona operaciones CRUD básicas heredadas de JpaRepository
- * y métodos para buscar reservas por usuario, espacio, fecha y estado.
+ * Repositorio para la entidad Reserva. Proporciona operaciones CRUD básicas
+ * heredadas de JpaRepository y métodos para buscar reservas por usuario,
+ * espacio, fecha y estado.
  */
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
@@ -42,7 +43,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 * Busca las reservas de un espacio en una fecha.
 	 *
 	 * @param espacioId Identificador del espacio
-	 * @param fecha La fecha
+	 * @param fecha     La fecha
 	 * @return Lista de reservas del día
 	 */
 	public List<Reserva> findByEspacioIdAndFecha(Long espacioId, LocalDate fecha);
@@ -70,4 +71,12 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 * @return Número de reservas
 	 */
 	public long countByEstado(Estado estado);
+
+	/**
+	 * Busca una reserva por el código de su enlace de invitación.
+	 *
+	 * @param codigoInvitacion Código del enlace
+	 * @return Un Optional con la reserva si existe
+	 */
+	public Optional<Reserva> findByCodigoInvitacion(String codigoInvitacion);
 }

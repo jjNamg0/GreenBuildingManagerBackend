@@ -1,14 +1,27 @@
 package co.edu.unbosque.GreenBuilding.util;
 
-import java.text.Normalizer;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Clase de utilidad para limpiar, comparar y escapar textos.
  *
- * @author Juan Arango
+ * @author Daniel M
  * @version 1.0
  */
 public class TextoUtil {
+
+	/** Letras con tilde que se cambian al normalizar. */
+	private static final String CON_TILDE = "áàäâãéèëêíìïîóòöôõúùüûñç";
+
+	/** Letra sin tilde que corresponde a cada letra de CON_TILDE. */
+	private static final String SIN_TILDE = "aaaaaeeeeiiiiooooouuuunc";
+
+	/** Caracteres que tienen un significado especial en HTML. */
+	private static final String ESPECIALES_HTML = "&<>\"'";
+
+	/** Forma segura de escribir en HTML cada carácter de ESPECIALES_HTML. */
+	private static final String[] ESCAPES_HTML = {"&amp;", "&lt;", "&gt;", "&quot;", "&#39;"};
 
 	/** Constructor privado: esta clase solo tiene métodos estáticos. */
 	private TextoUtil() {}
@@ -20,7 +33,7 @@ public class TextoUtil {
 	 * @return true si está vacío
 	 */
 	public static boolean vacio(String texto) {
-		return texto == null || texto.isBlank();
+		return texto == null || texto.trim().isEmpty();
 	}
 
 	/**
@@ -30,7 +43,10 @@ public class TextoUtil {
 	 * @return Texto limpio
 	 */
 	public static String limpiar(String texto) {
-		return texto == null ? "" : texto.trim();
+		if (texto == null) {
+			return "";
+		}
+		return texto.trim();
 	}
 
 	/**
@@ -40,7 +56,10 @@ public class TextoUtil {
 	 * @return Texto limpio, o null si está vacío
 	 */
 	public static String opcional(String texto) {
-		return vacio(texto) ? null : texto.trim();
+		if (vacio(texto)) {
+			return null;
+		}
+		return texto.trim();
 	}
 
 	/**
@@ -60,9 +79,42 @@ public class TextoUtil {
 	 * @return Texto normalizado
 	 */
 	public static String normalizar(String texto) {
-		String sinTildes =
-				Normalizer.normalize(limpiar(texto), Normalizer.Form.NFD).replaceAll("\\p{M}", "");
-		return sinTildes.toLowerCase();
+		String minusculas = limpiar(texto).toLowerCase();
+		String sinTildes = "";
+		for (int i = 0; i < minusculas.length(); i++) {
+			String letra = minusculas.substring(i, i + 1);
+			int posicion = CON_TILDE.indexOf(letra);
+			if (posicion >= 0) {
+				letra = SIN_TILDE.substring(posicion, posicion + 1);
+			}
+			sinTildes = sinTildes + letra;
+		}
+		return sinTildes;
+	}
+
+	/**
+	 * Separa un texto por comas.
+	 *
+	 * @param texto Texto con valores separados por comas
+	 * @return Lista con cada valor, sin los vacíos del final
+	 */
+	public static List<String> separarPorComas(String texto) {
+		List<String> partes = new ArrayList<>();
+		String actual = "";
+		for (int i = 0; i < texto.length(); i++) {
+			String letra = texto.substring(i, i + 1);
+			if (letra.equals(",")) {
+				partes.add(actual);
+				actual = "";
+			} else {
+				actual = actual + letra;
+			}
+		}
+		partes.add(actual);
+		for (int i = partes.size() - 1; i > 0 && partes.get(i).isEmpty(); i--) {
+			partes.remove(i);
+		}
+		return partes;
 	}
 
 	/**
@@ -83,11 +135,16 @@ public class TextoUtil {
 	 * @return Texto escapado
 	 */
 	public static String escaparHtml(String texto) {
-		return limpiar(texto)
-				.replace("&", "&amp;")
-				.replace("<", "&lt;")
-				.replace(">", "&gt;")
-				.replace("\"", "&quot;")
-				.replace("'", "&#39;");
+		String limpio = limpiar(texto);
+		String escapado = "";
+		for (int i = 0; i < limpio.length(); i++) {
+			String letra = limpio.substring(i, i + 1);
+			int posicion = ESPECIALES_HTML.indexOf(letra);
+			if (posicion >= 0) {
+				letra = ESCAPES_HTML[posicion];
+			}
+			escapado = escapado + letra;
+		}
+		return escapado;
 	}
 }
