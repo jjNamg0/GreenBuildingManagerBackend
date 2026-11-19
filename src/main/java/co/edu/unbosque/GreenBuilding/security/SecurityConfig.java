@@ -18,8 +18,9 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Configuración de seguridad para la aplicación. Define la cadena de filtros, las reglas de acceso
- * por rol, el manejo de errores 401 y 403, y los beans de autenticación.
+ * Configuración de seguridad para la aplicación. Define la cadena de filtros,
+ * las reglas de acceso por rol, el manejo de errores 401 y 403, y los beans de
+ * autenticación.
  */
 @Configuration
 @EnableWebSecurity
@@ -40,19 +41,19 @@ public class SecurityConfig {
 	/**
 	 * Constructor que inicializa la configuración con las dependencias necesarias.
 	 *
-	 * @param jwtAuthFilter Filtro de autenticación JWT
+	 * @param jwtAuthFilter      Filtro de autenticación JWT
 	 * @param userDetailsService Servicio para cargar detalles de usuario
 	 */
-	public SecurityConfig(
-			JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
+	public SecurityConfig(JwtAuthenticationFilter jwtAuthFilter, UserDetailsService userDetailsService) {
 		this.jwtAuthFilter = jwtAuthFilter;
 		this.userDetailsService = userDetailsService;
 	}
 
 	/**
-	 * Configura la cadena de filtros de seguridad. Deshabilita CSRF, habilita CORS con la
-	 * configuración de los controladores, define las reglas por rol, responde 401 cuando falta el
-	 * token o venció y 403 cuando el rol no tiene permiso.
+	 * Configura la cadena de filtros de seguridad. Deshabilita CSRF, habilita CORS
+	 * con la configuración de los controladores, define las reglas por rol,
+	 * responde 401 cuando falta el token o venció y 403 cuando el rol no tiene
+	 * permiso.
 	 *
 	 * @param http Objeto HttpSecurity para configurar la seguridad
 	 * @return Cadena de filtros de seguridad configurada
@@ -60,119 +61,53 @@ public class SecurityConfig {
 	 */
 	@Bean
 	public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-		http.csrf(csrf -> csrf.disable())
-				.cors(Customizer.withDefaults())
-				.authorizeHttpRequests(
-						auth ->
-								auth.requestMatchers(HttpMethod.OPTIONS, "/**")
-										.permitAll()
-										.requestMatchers(
-												"/auth/**",
-												"/conjunto/getall",
-												"/ruta/**",
-												"/recomendacion/getconjuntoscercanos",
-												"/invitacion/getbycodigo/**",
-												"/error")
-										.permitAll()
-										.requestMatchers("/", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**")
-										.permitAll()
-										.requestMatchers(
-												"/user/getall",
-												"/user/count",
-												"/user/exists/**",
-												"/user/getbyid/**",
-												"/user/updatejson",
-												"/user/asignarunidad",
-												"/user/cambiarestado",
-												"/user/deletebyid/**")
-										.hasRole(ADMIN)
-										.requestMatchers("/user/updateintereses")
-										.hasRole(USER)
-										.requestMatchers(
-												"/conjunto/createjson", "/conjunto/updatejson", "/conjunto/deletebyid/**")
-										.hasRole(ADMIN)
-										.requestMatchers("/unidad/**")
-										.hasRole(ADMIN)
-										.requestMatchers(
-												"/espacio/getall",
-												"/espacio/createjson",
-												"/espacio/updatejson",
-												"/espacio/deletebyid/**")
-										.hasRole(ADMIN)
-										.requestMatchers(
-												"/reserva/getall",
-												"/reserva/count",
-												"/reserva/getbyid/**",
-												"/reserva/aprobar/**",
-												"/reserva/rechazar/**")
-										.hasRole(ADMIN)
-										.requestMatchers(
-												"/reserva/getmine",
-												"/reserva/getdisponibilidad",
-												"/reserva/createjson",
-												"/reserva/cancelar/**")
-										.hasRole(USER)
-										.requestMatchers(
-												"/evento/getall",
-												"/evento/count",
-												"/evento/createjson",
-												"/evento/updatejson",
-												"/evento/cancelar/**",
-												"/evento/deletebyid/**",
-												"/evento/vistaprevia")
-										.hasRole(ADMIN)
-										.requestMatchers("/evento/asistir/**", "/evento/noasistir/**")
-										.hasRole(USER)
-										.requestMatchers(
-												"/invitacion/getenlaceevento/**",
-												"/invitacion/enviarevento/**",
-												"/invitacion/getinvitadosevento/**")
-										.hasRole(ADMIN)
-										.requestMatchers(
-												"/invitacion/getenlacereserva/**",
-												"/invitacion/enviarreserva/**",
-												"/invitacion/getinvitadosreserva/**")
-										.hasRole(USER)
-										.requestMatchers("/recomendacion/**")
-										.hasRole(USER)
-										.requestMatchers("/auditoria/**", "/resumen/**")
-										.hasRole(ADMIN)
-										.anyRequest()
-										.authenticated())
-				.sessionManagement(
-						session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.exceptionHandling(
-						errores ->
-								errores
-										.authenticationEntryPoint(
-												(request, response, e) -> {
-													response.setStatus(401);
-													response.setContentType("text/plain;charset=UTF-8");
-													response
-															.getOutputStream()
-															.write(
-																	"Tu sesión expiró. Inicia sesión de nuevo."
-																			.getBytes());
-												})
-										.accessDeniedHandler(
-												(request, response, e) -> {
-													response.setStatus(403);
-													response.setContentType("text/plain;charset=UTF-8");
-													response
-															.getOutputStream()
-															.write(
-																	"No tienes permisos para realizar esta acción."
-																			.getBytes());
-												}))
-				.authenticationProvider(authenticationProvider())
+		http.csrf(csrf -> csrf.disable()).cors(Customizer.withDefaults()).authorizeHttpRequests(auth -> auth
+				.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+				.requestMatchers("/auth/**", "/conjunto/getall", "/ruta/**", "/recomendacion/getconjuntoscercanos",
+						"/invitacion/getbycodigo/**", "/error")
+				.permitAll().requestMatchers("/", "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
+				.requestMatchers("/user/getall", "/user/count", "/user/exists/**", "/user/getbyid/**",
+						"/user/updatejson", "/user/asignarunidad", "/user/cambiarestado", "/user/deletebyid/**")
+				.hasRole(ADMIN).requestMatchers("/user/updateintereses").hasRole(USER)
+				.requestMatchers("/conjunto/createjson", "/conjunto/updatejson", "/conjunto/deletebyid/**")
+				.hasRole(ADMIN).requestMatchers("/unidad/**").hasRole(ADMIN)
+				.requestMatchers("/espacio/getall", "/espacio/createjson", "/espacio/updatejson",
+						"/espacio/deletebyid/**")
+				.hasRole(ADMIN)
+				.requestMatchers("/reserva/getall", "/reserva/count", "/reserva/getbyid/**", "/reserva/aprobar/**",
+						"/reserva/rechazar/**")
+				.hasRole(ADMIN)
+				.requestMatchers("/reserva/getmine", "/reserva/getdisponibilidad", "/reserva/createjson",
+						"/reserva/cancelar/**")
+				.hasRole(USER)
+				.requestMatchers("/evento/getall", "/evento/count", "/evento/createjson", "/evento/updatejson",
+						"/evento/cancelar/**", "/evento/deletebyid/**", "/evento/vistaprevia")
+				.hasRole(ADMIN).requestMatchers("/evento/asistir/**", "/evento/noasistir/**").hasRole(USER)
+				.requestMatchers("/invitacion/getenlaceevento/**", "/invitacion/enviarevento/**",
+						"/invitacion/getinvitadosevento/**")
+				.hasRole(ADMIN)
+				.requestMatchers("/invitacion/getenlacereserva/**", "/invitacion/enviarreserva/**",
+						"/invitacion/getinvitadosreserva/**")
+				.hasRole(USER).requestMatchers("/recomendacion/**").hasRole(USER)
+				.requestMatchers("/auditoria/**", "/resumen/**").hasRole(ADMIN).anyRequest().authenticated())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.exceptionHandling(errores -> errores.authenticationEntryPoint((request, response, e) -> {
+					response.setStatus(401);
+					response.setContentType("text/plain;charset=UTF-8");
+					response.getOutputStream().write("Tu sesión expiró. Inicia sesión de nuevo.".getBytes());
+				}).accessDeniedHandler((request, response, e) -> {
+					response.setStatus(403);
+					response.setContentType("text/plain;charset=UTF-8");
+					response.getOutputStream().write("No tienes permisos para realizar esta acción.".getBytes());
+				})).authenticationProvider(authenticationProvider())
 				.addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
 		return http.build();
 	}
 
 	/**
-	 * Configura el proveedor de autenticación. Utiliza DaoAuthenticationProvider con el servicio de
-	 * detalles de usuario y el codificador de contraseñas.
+	 * Configura el proveedor de autenticación. Utiliza DaoAuthenticationProvider
+	 * con el servicio de detalles de usuario y el codificador de contraseñas.
 	 *
 	 * @return Proveedor de autenticación configurado
 	 */
@@ -192,14 +127,13 @@ public class SecurityConfig {
 	 * @throws Exception Si ocurre un error durante la configuración
 	 */
 	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-			throws Exception {
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 		return config.getAuthenticationManager();
 	}
 
 	/**
-	 * Configura el codificador de contraseñas. Utiliza BCrypt para codificar contraseñas de forma
-	 * segura.
+	 * Configura el codificador de contraseñas. Utiliza BCrypt para codificar
+	 * contraseñas de forma segura.
 	 *
 	 * @return Codificador de contraseñas configurado
 	 */

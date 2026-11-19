@@ -11,9 +11,9 @@ import co.edu.unbosque.GreenBuilding.model.Evento;
 import co.edu.unbosque.GreenBuilding.model.Evento.Estado;
 
 /**
- * Repositorio para la entidad Evento.
- * Proporciona operaciones CRUD básicas heredadas de JpaRepository
- * y métodos para buscar eventos por conjunto y espacio.
+ * Repositorio para la entidad Evento. Proporciona operaciones CRUD básicas
+ * heredadas de JpaRepository y métodos para buscar eventos por conjunto y
+ * espacio.
  */
 public interface EventoRepository extends JpaRepository<Evento, Long> {
 
@@ -52,7 +52,7 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
 	 * Cuenta los eventos con un estado desde una fecha.
 	 *
 	 * @param estado El estado
-	 * @param fecha La fecha mínima
+	 * @param fecha  La fecha mínima
 	 * @return Número de eventos
 	 */
 	public long countByEstadoAndFechaGreaterThanEqual(Estado estado, LocalDate fecha);
@@ -61,7 +61,7 @@ public interface EventoRepository extends JpaRepository<Evento, Long> {
 	 * Busca los eventos de un espacio en un día.
 	 *
 	 * @param espacioId Identificador del espacio
-	 * @param fecha Día a revisar
+	 * @param fecha     Día a revisar
 	 * @return Lista de eventos del día en ese espacio
 	 */
 	public List<Evento> findByEspacioIdAndFecha(Long espacioId, LocalDate fecha);

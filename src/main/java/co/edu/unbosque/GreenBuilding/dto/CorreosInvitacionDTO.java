@@ -11,8 +11,11 @@ public class CorreosInvitacionDTO {
 	/** Correos de los invitados. */
 	private List<String> correos;
 
-	/** Constructor por defecto. Crea una instancia vacía de CorreosInvitacionDTO. */
-	public CorreosInvitacionDTO() {}
+	/**
+	 * Constructor por defecto. Crea una instancia vacía de CorreosInvitacionDTO.
+	 */
+	public CorreosInvitacionDTO() {
+	}
 
 	/**
 	 * Constructor con correos.
@@ -42,8 +45,8 @@ public class CorreosInvitacionDTO {
 	}
 
 	/**
-	 * Calcula el código hash para este objeto. Utilizado para almacenar objetos en colecciones
-	 * basadas en hash.
+	 * Calcula el código hash para este objeto. Utilizado para almacenar objetos en
+	 * colecciones basadas en hash.
 	 *
 	 * @return Código hash calculado
 	 */
@@ -53,31 +56,32 @@ public class CorreosInvitacionDTO {
 	}
 
 	/**
-	 * Compara este objeto con otro para determinar igualdad. Dos objetos CorreosInvitacionDTO son iguales si
-	 * todos sus atributos son iguales.
+	 * Compara este objeto con otro para determinar igualdad. Dos objetos
+	 * CorreosInvitacionDTO son iguales si todos sus atributos son iguales.
 	 *
 	 * @param obj Objeto a comparar
 	 * @return true si los objetos son iguales, false en caso contrario
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
 		CorreosInvitacionDTO other = (CorreosInvitacionDTO) obj;
 		return Objects.equals(correos, other.correos);
 	}
 
 	/**
-	 * Devuelve una representación en cadena de texto de este objeto. Útil para depuración y registro.
+	 * Devuelve una representación en cadena de texto de este objeto. Útil para
+	 * depuración y registro.
 	 *
 	 * @return Representación en cadena de texto del objeto
 	 */
 	@Override
 	public String toString() {
-		return "CorreosInvitacion ["
-				+ "correos="
-				+ correos
-				+ "]";
+		return "CorreosInvitacion [" + "correos=" + correos + "]";
 	}
 }

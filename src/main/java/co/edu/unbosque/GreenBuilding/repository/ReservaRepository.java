@@ -10,9 +10,9 @@ import co.edu.unbosque.GreenBuilding.model.Reserva;
 import co.edu.unbosque.GreenBuilding.model.Reserva.Estado;
 
 /**
- * Repositorio para la entidad Reserva.
- * Proporciona operaciones CRUD básicas heredadas de JpaRepository
- * y métodos para buscar reservas por usuario, espacio, fecha y estado.
+ * Repositorio para la entidad Reserva. Proporciona operaciones CRUD básicas
+ * heredadas de JpaRepository y métodos para buscar reservas por usuario,
+ * espacio, fecha y estado.
  */
 public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 
@@ -43,7 +43,7 @@ public interface ReservaRepository extends JpaRepository<Reserva, Long> {
 	 * Busca las reservas de un espacio en una fecha.
 	 *
 	 * @param espacioId Identificador del espacio
-	 * @param fecha La fecha
+	 * @param fecha     La fecha
 	 * @return Lista de reservas del día
 	 */
 	public List<Reserva> findByEspacioIdAndFecha(Long espacioId, LocalDate fecha);

@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * Clase de utilidad para limpiar, comparar y escapar textos.
  *
- * @author Juan Arango
+ * @author Daniel M
  * @version 1.0
  */
 public class TextoUtil {

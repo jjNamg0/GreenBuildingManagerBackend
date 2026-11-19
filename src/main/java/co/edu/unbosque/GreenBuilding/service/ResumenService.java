@@ -19,25 +19,32 @@ import org.springframework.stereotype.Service;
 public class ResumenService {
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired private ConjuntoRepository conjuntoRepo;
+	@Autowired
+	private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a las unidades. */
-	@Autowired private UnidadRepository unidadRepo;
+	@Autowired
+	private UnidadRepository unidadRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired private UsuarioRepository usuarioRepo;
+	@Autowired
+	private UsuarioRepository usuarioRepo;
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired private EspacioRepository espacioRepo;
+	@Autowired
+	private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a los eventos. */
-	@Autowired private EventoRepository eventoRepo;
+	@Autowired
+	private EventoRepository eventoRepo;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired private ReservaRepository reservaRepo;
+	@Autowired
+	private ReservaRepository reservaRepo;
 
 	/** Constructor por defecto. */
-	public ResumenService() {}
+	public ResumenService() {
+	}
 
 	/**
 	 * Calcula los indicadores del panel de administración.
@@ -45,10 +52,7 @@ public class ResumenService {
 	 * @return DTO con los totales
 	 */
 	public ResumenDTO getAdmin() {
-		return new ResumenDTO(
-				conjuntoRepo.count(),
-				unidadRepo.count(),
-				usuarioRepo.countByUnidadIdIsNotNull(),
+		return new ResumenDTO(conjuntoRepo.count(), unidadRepo.count(), usuarioRepo.countByUnidadIdIsNotNull(),
 				espacioRepo.count(),
 				eventoRepo.countByEstadoAndFechaGreaterThanEqual(Evento.Estado.PROGRAMADO, LocalDate.now()),
 				reservaRepo.countByEstado(Reserva.Estado.PENDIENTE),

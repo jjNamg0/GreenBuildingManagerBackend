@@ -14,12 +14,13 @@ public class InvitadoDTO {
 	private String fechaEnvio;
 
 	/** Constructor por defecto. Crea una instancia vacía de InvitadoDTO. */
-	public InvitadoDTO() {}
+	public InvitadoDTO() {
+	}
 
 	/**
 	 * Constructor con correo, fechaEnvio.
 	 *
-	 * @param correo Correo del invitado.
+	 * @param correo     Correo del invitado.
 	 * @param fechaEnvio Fecha y hora del último envío.
 	 */
 	public InvitadoDTO(String correo, String fechaEnvio) {
@@ -64,8 +65,8 @@ public class InvitadoDTO {
 	}
 
 	/**
-	 * Calcula el código hash para este objeto. Utilizado para almacenar objetos en colecciones
-	 * basadas en hash.
+	 * Calcula el código hash para este objeto. Utilizado para almacenar objetos en
+	 * colecciones basadas en hash.
 	 *
 	 * @return Código hash calculado
 	 */
@@ -75,34 +76,32 @@ public class InvitadoDTO {
 	}
 
 	/**
-	 * Compara este objeto con otro para determinar igualdad. Dos objetos InvitadoDTO son iguales si
-	 * todos sus atributos son iguales.
+	 * Compara este objeto con otro para determinar igualdad. Dos objetos
+	 * InvitadoDTO son iguales si todos sus atributos son iguales.
 	 *
 	 * @param obj Objeto a comparar
 	 * @return true si los objetos son iguales, false en caso contrario
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
 		InvitadoDTO other = (InvitadoDTO) obj;
-		return Objects.equals(correo, other.correo)
-				&& Objects.equals(fechaEnvio, other.fechaEnvio);
+		return Objects.equals(correo, other.correo) && Objects.equals(fechaEnvio, other.fechaEnvio);
 	}
 
 	/**
-	 * Devuelve una representación en cadena de texto de este objeto. Útil para depuración y registro.
+	 * Devuelve una representación en cadena de texto de este objeto. Útil para
+	 * depuración y registro.
 	 *
 	 * @return Representación en cadena de texto del objeto
 	 */
 	@Override
 	public String toString() {
-		return "Invitado ["
-				+ "correo="
-				+ correo
-				+ ", fechaEnvio="
-				+ fechaEnvio
-				+ "]";
+		return "Invitado [" + "correo=" + correo + ", fechaEnvio=" + fechaEnvio + "]";
 	}
 }

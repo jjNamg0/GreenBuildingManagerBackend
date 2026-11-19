@@ -15,7 +15,7 @@ import java.util.List;
  * Clase de utilidad que revisa los datos que llegan a los controladores y lanza la excepción
  * correspondiente cuando un dato no es válido.
  *
- * @author Juan Arango
+ * @author Daniel M
  * @version 1.0
  */
 public class ExceptionChecker {

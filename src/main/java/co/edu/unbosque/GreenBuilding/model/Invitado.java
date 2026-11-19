@@ -11,8 +11,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * Clase que representa a una persona invitada por correo a un evento o a una reserva. Se guarda para
- * avisarle si el plan se cancela.
+ * Clase que representa a una persona invitada por correo a un evento o a una
+ * reserva. Se guarda para avisarle si el plan se cancela.
  *
  * Esta entidad se almacena en la tabla "invitado" en la base de datos.
  */
@@ -26,12 +26,14 @@ public class Invitado {
 	private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id;
 
 	/**
-	 * Identificador del evento al que fue invitado, o null si la invitación es a una reserva.
+	 * Identificador del evento al que fue invitado, o null si la invitación es a
+	 * una reserva.
 	 */
 	private Long eventoId;
 
 	/**
-	 * Identificador de la reserva a la que fue invitado, o null si la invitación es a un evento.
+	 * Identificador de la reserva a la que fue invitado, o null si la invitación es
+	 * a un evento.
 	 */
 	private Long reservaId;
 
@@ -53,11 +55,12 @@ public class Invitado {
 	}
 
 	/**
-	 * Constructor con el evento o la reserva y el correo. La fecha de envío es la actual.
+	 * Constructor con el evento o la reserva y el correo. La fecha de envío es la
+	 * actual.
 	 *
-	 * @param eventoId Identificador del evento, o null
+	 * @param eventoId  Identificador del evento, o null
 	 * @param reservaId Identificador de la reserva, o null
-	 * @param correo Correo del invitado
+	 * @param correo    Correo del invitado
 	 */
 	public Invitado(Long eventoId, Long reservaId, String correo) {
 		this.eventoId = eventoId;

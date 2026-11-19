@@ -15,8 +15,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 /**
- * Clase de utilidad para la gestión de tokens JWT (JSON Web Token). Proporciona métodos para
- * generar, validar y extraer información de tokens JWT.
+ * Clase de utilidad para la gestión de tokens JWT (JSON Web Token). Proporciona
+ * métodos para generar, validar y extraer información de tokens JWT.
  */
 @Component
 public class JwtUtil {
@@ -24,12 +24,16 @@ public class JwtUtil {
 	/** Tiempo de validez del token en milisegundos (24 horas). */
 	private static final long JWT_TOKEN_VALIDITY = 24 * 60 * 60 * 1000;
 
-	/** Clave secreta utilizada para firmar los tokens JWT. Se obtiene del archivo de propiedades. */
+	/**
+	 * Clave secreta utilizada para firmar los tokens JWT. Se obtiene del archivo de
+	 * propiedades.
+	 */
 	@Value("${jwt.secret:defaultSecretKeyWhichShouldBeAtLeast32CharactersLong}")
 	private String secret;
 
 	/** Constructor por defecto. */
-	public JwtUtil() {}
+	public JwtUtil() {
+	}
 
 	/**
 	 * Obtiene la clave de firma para los tokens JWT.
@@ -74,8 +78,8 @@ public class JwtUtil {
 	/**
 	 * Extrae una reclamación específica del token JWT.
 	 *
-	 * @param <T> Tipo de la reclamación a extraer
-	 * @param token Token JWT
+	 * @param <T>            Tipo de la reclamación a extraer
+	 * @param token          Token JWT
 	 * @param claimsResolver Función para resolver la reclamación
 	 * @return Valor de la reclamación
 	 */
@@ -91,11 +95,7 @@ public class JwtUtil {
 	 * @return Todas las reclamaciones contenidas en el token
 	 */
 	private Claims extractAllClaims(String token) {
-		return Jwts.parserBuilder()
-				.setSigningKey(getSigningKey())
-				.build()
-				.parseClaimsJws(token)
-				.getBody();
+		return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
 	}
 
 	/**
@@ -109,7 +109,8 @@ public class JwtUtil {
 	}
 
 	/**
-	 * Genera un token JWT para un usuario. Incluye el rol del usuario en las reclamaciones.
+	 * Genera un token JWT para un usuario. Incluye el rol del usuario en las
+	 * reclamaciones.
 	 *
 	 * @param userDetails Detalles del usuario para el que se genera el token
 	 * @return Token JWT generado
@@ -126,24 +127,20 @@ public class JwtUtil {
 	/**
 	 * Crea un token JWT con las reclamaciones y el sujeto especificados.
 	 *
-	 * @param claims Reclamaciones a incluir en el token
+	 * @param claims  Reclamaciones a incluir en el token
 	 * @param subject Sujeto del token (nombre de usuario)
 	 * @return Token JWT creado
 	 */
 	private String createToken(Map<String, Object> claims, String subject) {
-		return Jwts.builder()
-				.setClaims(claims)
-				.setSubject(subject)
-				.setIssuedAt(new Date(System.currentTimeMillis()))
+		return Jwts.builder().setClaims(claims).setSubject(subject).setIssuedAt(new Date(System.currentTimeMillis()))
 				.setExpiration(new Date(System.currentTimeMillis() + JWT_TOKEN_VALIDITY))
-				.signWith(getSigningKey(), SignatureAlgorithm.HS256)
-				.compact();
+				.signWith(getSigningKey(), SignatureAlgorithm.HS256).compact();
 	}
 
 	/**
 	 * Valida un token JWT para un usuario específico.
 	 *
-	 * @param token Token JWT a validar
+	 * @param token       Token JWT a validar
 	 * @param userDetails Detalles del usuario para validar el token
 	 * @return true si el token es válido para el usuario, false en caso contrario
 	 */

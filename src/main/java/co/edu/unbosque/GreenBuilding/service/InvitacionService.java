@@ -25,16 +25,15 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio de las invitaciones a eventos y a reservas: genera el enlace público de cada plan, envía
- * la invitación por correo a los invitados que escribe el anfitrión, los guarda y les avisa si el
- * plan se cancela.
+ * Servicio de las invitaciones a eventos y a reservas: genera el enlace público
+ * de cada plan, envía la invitación por correo a los invitados que escribe el
+ * anfitrión, los guarda y les avisa si el plan se cancela.
  */
 @Service
 public class InvitacionService {
 
 	/** Letras y números con los que se arma el código del enlace. */
-	private static final String CARACTERES =
-			"ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
+	private static final String CARACTERES = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
 	/** Largo del código del enlace. */
 	private static final int LARGO_CODIGO = 24;
@@ -47,38 +46,48 @@ public class InvitacionService {
 	private String urlFront;
 
 	/** Repositorio para acceder a los invitados. */
-	@Autowired private InvitadoRepository invitadoRepo;
+	@Autowired
+	private InvitadoRepository invitadoRepo;
 
 	/** Repositorio para acceder a los eventos. */
-	@Autowired private EventoRepository eventoRepo;
+	@Autowired
+	private EventoRepository eventoRepo;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired private ReservaRepository reservaRepo;
+	@Autowired
+	private ReservaRepository reservaRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired private ConjuntoRepository conjuntoRepo;
+	@Autowired
+	private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired private EspacioRepository espacioRepo;
+	@Autowired
+	private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired private UsuarioRepository usuarioRepo;
+	@Autowired
+	private UsuarioRepository usuarioRepo;
 
 	/** Servicio de correo. */
-	@Autowired private CorreoService correoServ;
+	@Autowired
+	private CorreoService correoServ;
 
 	/** Servicio que arma el HTML de los correos. */
-	@Autowired private PlantillaCorreoService plantillaServ;
+	@Autowired
+	private PlantillaCorreoService plantillaServ;
 
 	/** Servicio de auditoría. */
-	@Autowired private AuditoriaService auditoriaServ;
+	@Autowired
+	private AuditoriaService auditoriaServ;
 
 	/** Constructor por defecto. */
-	public InvitacionService() {}
+	public InvitacionService() {
+	}
 
 	/**
-	 * Busca la invitación de un enlace público. Primero busca un evento con ese código y luego una
-	 * reserva aprobada, cancelada o ya pasada.
+	 * Busca la invitación de un enlace público. Primero busca un evento con ese
+	 * código y luego una reserva aprobada, cancelada o ya pasada.
 	 *
 	 * @param codigo Código del enlace
 	 * @return DTO de la invitación, o null si el código no existe
@@ -86,21 +95,21 @@ public class InvitacionService {
 	public InvitacionDTO getByCodigo(String codigo) {
 		Optional<Evento> evento = eventoRepo.findByCodigoInvitacion(codigo);
 		if (evento.isPresent()) {
-			auditoriaServ.registrar(
-					null, "INVITACION", "Evento", "Abrió la invitación de " + evento.get().getTitulo());
+			auditoriaServ.registrar(null, "INVITACION", "Evento", "Abrió la invitación de " + evento.get().getTitulo());
 			return deEvento(evento.get());
 		}
 		Optional<Reserva> reserva = reservaRepo.findByCodigoInvitacion(codigo);
 		if (reserva.isPresent() && reserva.get().getEstado() != Reserva.Estado.PENDIENTE) {
-			auditoriaServ.registrar(
-					null, "INVITACION", "Reserva", "Abrió la invitación de " + nombreEspacio(reserva.get().getEspacioId()));
+			auditoriaServ.registrar(null, "INVITACION", "Reserva",
+					"Abrió la invitación de " + nombreEspacio(reserva.get().getEspacioId()));
 			return deReserva(reserva.get());
 		}
 		return null;
 	}
 
 	/**
-	 * Obtiene el enlace público de un evento. Si el evento aún no tiene código, lo genera.
+	 * Obtiene el enlace público de un evento. Si el evento aún no tiene código, lo
+	 * genera.
 	 *
 	 * @param id ID del evento
 	 * @return El enlace, o null si el evento no existe
@@ -119,32 +128,38 @@ public class InvitacionService {
 	}
 
 	/**
-	 * Obtiene el enlace público de una reserva. Si la reserva aún no tiene código, lo genera.
+	 * Obtiene el enlace público de una reserva. Si la reserva aún no tiene código,
+	 * lo genera.
 	 *
 	 * @param id ID de la reserva
 	 * @return El enlace, o null si la reserva no existe
 	 */
 	public String getEnlaceReserva(Long id) {
-		Optional<Reserva> found = reservaRepo.findById(id);
-		if (!found.isPresent()) {
-			return null;
-		}
-		Reserva reserva = found.get();
-		if (reserva.getCodigoInvitacion() == null) {
-			reserva.setCodigoInvitacion(nuevoCodigo());
-			reservaRepo.save(reserva);
-		}
-		return enlace(reserva.getCodigoInvitacion());
+
+	    Optional<Reserva> found = reservaRepo.findById(id);
+
+	    if (!found.isPresent()) {
+	        return null;
+	    }
+
+	    Reserva reserva = found.get();
+
+	    if (reserva.getCodigoInvitacion() == null) {
+	        reserva.setCodigoInvitacion(nuevoCodigo());
+	        reservaRepo.save(reserva);
+	    }
+
+	    return enlace(reserva.getCodigoInvitacion());
 	}
 
 	/**
-	 * Revisa si el residente puede invitar a una reserva: debe ser suya, estar aprobada y no haber
-	 * empezado.
+	 * Revisa si el residente puede invitar a una reserva: debe ser suya, estar
+	 * aprobada y no haber empezado.
 	 *
 	 * @param username Correo del residente
-	 * @param id ID de la reserva
-	 * @return 0 si puede invitar, 1 si la reserva no existe, 2 si es de otro residente, 3 si no está
-	 *     aprobada o ya empezó
+	 * @param id       ID de la reserva
+	 * @return 0 si puede invitar, 1 si la reserva no existe, 2 si es de otro
+	 *         residente, 3 si no está aprobada o ya empezó
 	 */
 	public int revisarReserva(String username, Long id) {
 		Optional<Reserva> found = reservaRepo.findById(id);
@@ -163,12 +178,13 @@ public class InvitacionService {
 	}
 
 	/**
-	 * Envía la invitación de un evento programado a una lista de correos y los guarda como invitados.
+	 * Envía la invitación de un evento programado a una lista de correos y los
+	 * guarda como invitados.
 	 *
-	 * @param id ID del evento
+	 * @param id      ID del evento
 	 * @param correos Correos ya revisados
-	 * @return Número de correos enviados (0 o más), -1 si el evento no existe, -2 si fue cancelado o
-	 *     finalizó
+	 * @return Número de correos enviados (0 o más), -1 si el evento no existe, -2
+	 *         si fue cancelado o finalizó
 	 */
 	public int enviarEvento(Long id, List<String> correos) {
 		Optional<Evento> found = eventoRepo.findById(id);
@@ -192,23 +208,25 @@ public class InvitacionService {
 				enviados++;
 			}
 		}
-		auditoriaServ.registrar(
-				"INVITACION", "Evento", "Envió la invitación de " + evento.getTitulo() + " a " + enviados + " correo(s)");
+		auditoriaServ.registrar("INVITACION", "Evento",
+				"Envió la invitación de " + evento.getTitulo() + " a " + enviados + " correo(s)");
 		return enviados;
 	}
 
 	/**
-	 * Envía la invitación de una reserva aprobada a una lista de correos y los guarda como invitados.
-	 * Antes hay que revisar la reserva con {@link #revisarReserva(String, Long)}.
+	 * Envía la invitación de una reserva aprobada a una lista de correos y los
+	 * guarda como invitados. Antes hay que revisar la reserva con
+	 * {@link #revisarReserva(String, Long)}.
 	 *
 	 * @param username Correo del residente que invita
-	 * @param id ID de la reserva
-	 * @param correos Correos ya revisados
+	 * @param id       ID de la reserva
+	 * @param correos  Correos ya revisados
 	 * @return Número de correos enviados (0 o más)
 	 */
 	public int enviarReserva(String username, Long id, List<String> correos) {
 		Reserva reserva = reservaRepo.findById(id).get();
-		String html = plantillaServ.invitacionReserva(reserva, nombreUsuario(reserva.getUsuarioId()), getEnlaceReserva(id));
+		String html = plantillaServ.invitacionReserva(reserva, nombreUsuario(reserva.getUsuarioId()),
+				getEnlaceReserva(id));
 		String asunto = nombreUsuario(reserva.getUsuarioId()) + " te invita a " + nombreEspacio(reserva.getEspacioId());
 		int enviados = 0;
 		for (String correo : limpiar(correos)) {
@@ -222,11 +240,8 @@ public class InvitacionService {
 				enviados++;
 			}
 		}
-		auditoriaServ.registrar(
-				username,
-				"INVITACION",
-				"Reserva",
-				"Envió la invitación de su reserva de " + nombreEspacio(reserva.getEspacioId()) + " a " + enviados + " correo(s)");
+		auditoriaServ.registrar(username, "INVITACION", "Reserva", "Envió la invitación de su reserva de "
+				+ nombreEspacio(reserva.getEspacioId()) + " a " + enviados + " correo(s)");
 		return enviados;
 	}
 
@@ -270,7 +285,8 @@ public class InvitacionService {
 	public void avisarCancelacionReserva(Reserva reserva) {
 		String html = plantillaServ.cancelacionReserva(reserva, nombreUsuario(reserva.getUsuarioId()));
 		for (Invitado invitado : invitadoRepo.findByReservaIdOrderByFechaEnvioDesc(reserva.getId())) {
-			correoServ.enviarHtml(invitado.getCorreo(), "Plan cancelado en " + nombreEspacio(reserva.getEspacioId()), html);
+			correoServ.enviarHtml(invitado.getCorreo(), "Plan cancelado en " + nombreEspacio(reserva.getEspacioId()),
+					html);
 		}
 	}
 
@@ -314,7 +330,8 @@ public class InvitacionService {
 	}
 
 	/**
-	 * Pasa los correos a minúscula, les quita los espacios y descarta los repetidos.
+	 * Pasa los correos a minúscula, les quita los espacios y descarta los
+	 * repetidos.
 	 *
 	 * @param correos Correos recibidos
 	 * @return Correos sin repetir
@@ -406,7 +423,7 @@ public class InvitacionService {
 	/**
 	 * Copia en la invitación los datos del conjunto que se necesitan para el mapa.
 	 *
-	 * @param dto Invitación
+	 * @param dto        Invitación
 	 * @param conjuntoId ID del conjunto (puede ser null)
 	 */
 	private void ponerConjunto(InvitacionDTO dto, Long conjuntoId) {

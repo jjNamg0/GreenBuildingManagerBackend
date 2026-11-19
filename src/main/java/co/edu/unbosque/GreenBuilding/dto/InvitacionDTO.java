@@ -4,7 +4,8 @@ import co.edu.unbosque.GreenBuilding.model.Evento.Plantilla;
 import java.util.Objects;
 
 /**
- * DTO con lo que ve un invitado al abrir el enlace: el plan, el lugar y las coordenadas del mapa.
+ * DTO con lo que ve un invitado al abrir el enlace: el plan, el lugar y las
+ * coordenadas del mapa.
  */
 public class InvitacionDTO {
 
@@ -60,7 +61,8 @@ public class InvitacionDTO {
 	private String espacioNombre;
 
 	/** Constructor por defecto. Crea una instancia vacía de InvitacionDTO. */
-	public InvitacionDTO() {}
+	public InvitacionDTO() {
+	}
 
 	/**
 	 * Obtiene: tipo de invitación: EVENTO o RESERVA.
@@ -369,90 +371,57 @@ public class InvitacionDTO {
 	}
 
 	/**
-	 * Calcula el código hash para este objeto. Utilizado para almacenar objetos en colecciones
-	 * basadas en hash.
+	 * Calcula el código hash para este objeto. Utilizado para almacenar objetos en
+	 * colecciones basadas en hash.
 	 *
 	 * @return Código hash calculado
 	 */
 	@Override
 	public int hashCode() {
-		return Objects.hash(tipo, titulo, descripcion, anfitrion, fecha, horaInicio, horaFin, plantilla, estado, motivoCancelacion, conjuntoId, conjuntoNombre, direccion, municipio, latitud, longitud, espacioNombre);
+		return Objects.hash(tipo, titulo, descripcion, anfitrion, fecha, horaInicio, horaFin, plantilla, estado,
+				motivoCancelacion, conjuntoId, conjuntoNombre, direccion, municipio, latitud, longitud, espacioNombre);
 	}
 
 	/**
-	 * Compara este objeto con otro para determinar igualdad. Dos objetos InvitacionDTO son iguales si
-	 * todos sus atributos son iguales.
+	 * Compara este objeto con otro para determinar igualdad. Dos objetos
+	 * InvitacionDTO son iguales si todos sus atributos son iguales.
 	 *
 	 * @param obj Objeto a comparar
 	 * @return true si los objetos son iguales, false en caso contrario
 	 */
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj) return true;
-		if (obj == null) return false;
-		if (getClass() != obj.getClass()) return false;
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
 		InvitacionDTO other = (InvitacionDTO) obj;
-		return Objects.equals(tipo, other.tipo)
-				&& Objects.equals(titulo, other.titulo)
-				&& Objects.equals(descripcion, other.descripcion)
-				&& Objects.equals(anfitrion, other.anfitrion)
-				&& Objects.equals(fecha, other.fecha)
-				&& Objects.equals(horaInicio, other.horaInicio)
-				&& Objects.equals(horaFin, other.horaFin)
-				&& plantilla == other.plantilla
-				&& Objects.equals(estado, other.estado)
-				&& Objects.equals(motivoCancelacion, other.motivoCancelacion)
-				&& Objects.equals(conjuntoId, other.conjuntoId)
-				&& Objects.equals(conjuntoNombre, other.conjuntoNombre)
-				&& Objects.equals(direccion, other.direccion)
-				&& Objects.equals(municipio, other.municipio)
-				&& Objects.equals(latitud, other.latitud)
-				&& Objects.equals(longitud, other.longitud)
+		return Objects.equals(tipo, other.tipo) && Objects.equals(titulo, other.titulo)
+				&& Objects.equals(descripcion, other.descripcion) && Objects.equals(anfitrion, other.anfitrion)
+				&& Objects.equals(fecha, other.fecha) && Objects.equals(horaInicio, other.horaInicio)
+				&& Objects.equals(horaFin, other.horaFin) && plantilla == other.plantilla
+				&& Objects.equals(estado, other.estado) && Objects.equals(motivoCancelacion, other.motivoCancelacion)
+				&& Objects.equals(conjuntoId, other.conjuntoId) && Objects.equals(conjuntoNombre, other.conjuntoNombre)
+				&& Objects.equals(direccion, other.direccion) && Objects.equals(municipio, other.municipio)
+				&& Objects.equals(latitud, other.latitud) && Objects.equals(longitud, other.longitud)
 				&& Objects.equals(espacioNombre, other.espacioNombre);
 	}
 
 	/**
-	 * Devuelve una representación en cadena de texto de este objeto. Útil para depuración y registro.
+	 * Devuelve una representación en cadena de texto de este objeto. Útil para
+	 * depuración y registro.
 	 *
 	 * @return Representación en cadena de texto del objeto
 	 */
 	@Override
 	public String toString() {
-		return "Invitacion ["
-				+ "tipo="
-				+ tipo
-				+ ", titulo="
-				+ titulo
-				+ ", descripcion="
-				+ descripcion
-				+ ", anfitrion="
-				+ anfitrion
-				+ ", fecha="
-				+ fecha
-				+ ", horaInicio="
-				+ horaInicio
-				+ ", horaFin="
-				+ horaFin
-				+ ", plantilla="
-				+ plantilla
-				+ ", estado="
-				+ estado
-				+ ", motivoCancelacion="
-				+ motivoCancelacion
-				+ ", conjuntoId="
-				+ conjuntoId
-				+ ", conjuntoNombre="
-				+ conjuntoNombre
-				+ ", direccion="
-				+ direccion
-				+ ", municipio="
-				+ municipio
-				+ ", latitud="
-				+ latitud
-				+ ", longitud="
-				+ longitud
-				+ ", espacioNombre="
-				+ espacioNombre
-				+ "]";
+		return "Invitacion [" + "tipo=" + tipo + ", titulo=" + titulo + ", descripcion=" + descripcion + ", anfitrion="
+				+ anfitrion + ", fecha=" + fecha + ", horaInicio=" + horaInicio + ", horaFin=" + horaFin
+				+ ", plantilla=" + plantilla + ", estado=" + estado + ", motivoCancelacion=" + motivoCancelacion
+				+ ", conjuntoId=" + conjuntoId + ", conjuntoNombre=" + conjuntoNombre + ", direccion=" + direccion
+				+ ", municipio=" + municipio + ", latitud=" + latitud + ", longitud=" + longitud + ", espacioNombre="
+				+ espacioNombre + "]";
 	}
 }

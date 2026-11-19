@@ -15,29 +15,35 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que proporciona operaciones CRUD para las unidades (apartamentos y casas) de los
- * conjuntos. Implementa la interfaz CRUDOperation.
+ * Servicio que proporciona operaciones CRUD para las unidades (apartamentos y
+ * casas) de los conjuntos. Implementa la interfaz CRUDOperation.
  */
 @Service
 public class UnidadService implements CRUDOperation<UnidadDTO> {
 
 	/** Repositorio para acceder a las unidades. */
-	@Autowired private UnidadRepository unidadRepo;
+	@Autowired
+	private UnidadRepository unidadRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired private ConjuntoRepository conjuntoRepo;
+	@Autowired
+	private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired private UsuarioRepository usuarioRepo;
+	@Autowired
+	private UsuarioRepository usuarioRepo;
 
 	/** Mapeador para convertir entre entidades y DTOs. */
-	@Autowired private ModelMapper modelMapper;
+	@Autowired
+	private ModelMapper modelMapper;
 
 	/** Servicio de auditoría. */
-	@Autowired private AuditoriaService auditoriaServ;
+	@Autowired
+	private AuditoriaService auditoriaServ;
 
 	/** Constructor por defecto. */
-	public UnidadService() {}
+	public UnidadService() {
+	}
 
 	/**
 	 * Cuenta el número total de unidades.
@@ -64,8 +70,8 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 	 * Crea una nueva unidad en un conjunto.
 	 *
 	 * @param data DTO con los datos de la unidad
-	 * @return 0 si la creación fue exitosa, 1 si la unidad ya existe en el conjunto, 2 si el
-	 *     conjunto no existe
+	 * @return 0 si la creación fue exitosa, 1 si la unidad ya existe en el
+	 *         conjunto, 2 si el conjunto no existe
 	 */
 	@Override
 	public int create(UnidadDTO data) {
@@ -73,17 +79,15 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 		if (!conjunto.isPresent()) {
 			return 2;
 		}
-		if (unidadRepo
-				.findByConjuntoIdAndAgrupacionIgnoreCaseAndNumeroIgnoreCase(
-						conjunto.get().getId(), data.getAgrupacion().trim(), data.getNumero().trim())
-				.isPresent()) {
+		if (unidadRepo.findByConjuntoIdAndAgrupacionIgnoreCaseAndNumeroIgnoreCase(conjunto.get().getId(),
+				data.getAgrupacion().trim(), data.getNumero().trim()).isPresent()) {
 			return 1;
 		}
-		Unidad entity =
-				new Unidad(conjunto.get().getId(), data.getTipo(), data.getAgrupacion().trim(), data.getNumero().trim());
+		Unidad entity = new Unidad(conjunto.get().getId(), data.getTipo(), data.getAgrupacion().trim(),
+				data.getNumero().trim());
 		unidadRepo.save(entity);
-		auditoriaServ.registrar(
-				"CREAR", "Unidad", "Creó " + entity.getDescripcion() + " en " + conjunto.get().getNombre());
+		auditoriaServ.registrar("CREAR", "Unidad",
+				"Creó " + entity.getDescripcion() + " en " + conjunto.get().getNombre());
 		return 0;
 	}
 
@@ -111,8 +115,7 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 			return null;
 		}
 		List<UnidadDTO> dtoList = new ArrayList<>();
-		unidadRepo
-				.findByConjuntoIdOrderByAgrupacionAscNumeroAsc(conjuntoId)
+		unidadRepo.findByConjuntoIdOrderByAgrupacionAscNumeroAsc(conjuntoId)
 				.forEach((entity) -> dtoList.add(aDTO(entity)));
 		return dtoList;
 	}
@@ -121,7 +124,8 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 	 * Elimina una unidad. No se puede eliminar una unidad con residentes.
 	 *
 	 * @param id ID de la unidad
-	 * @return 0 si la eliminación fue exitosa, 1 si la unidad no existe, 2 si tiene residentes
+	 * @return 0 si la eliminación fue exitosa, 1 si la unidad no existe, 2 si tiene
+	 *         residentes
 	 */
 	@Override
 	public int deleteById(Long id) {
@@ -140,10 +144,10 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 	/**
 	 * Actualiza una unidad existente.
 	 *
-	 * @param id ID de la unidad
+	 * @param id      ID de la unidad
 	 * @param newData DTO con los nuevos datos
-	 * @return 0 si la actualización fue exitosa, 1 si ya existe otra unidad igual en el conjunto, 2
-	 *     si la unidad no existe, 3 si el conjunto no existe
+	 * @return 0 si la actualización fue exitosa, 1 si ya existe otra unidad igual
+	 *         en el conjunto, 2 si la unidad no existe, 3 si el conjunto no existe
 	 */
 	@Override
 	public int updateById(Long id, UnidadDTO newData) {
@@ -155,9 +159,8 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 		if (!conjunto.isPresent()) {
 			return 3;
 		}
-		Optional<Unidad> repetida =
-				unidadRepo.findByConjuntoIdAndAgrupacionIgnoreCaseAndNumeroIgnoreCase(
-						conjunto.get().getId(), newData.getAgrupacion().trim(), newData.getNumero().trim());
+		Optional<Unidad> repetida = unidadRepo.findByConjuntoIdAndAgrupacionIgnoreCaseAndNumeroIgnoreCase(
+				conjunto.get().getId(), newData.getAgrupacion().trim(), newData.getNumero().trim());
 		if (repetida.isPresent() && !repetida.get().getId().equals(id)) {
 			return 1;
 		}

@@ -15,7 +15,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
 /**
- * Clase que representa un evento de un conjunto (fiesta, asamblea, plan infantil, etc.).
+ * Clase que representa un evento de un conjunto (fiesta, asamblea, plan
+ * infantil, etc.).
  *
  * Esta entidad se almacena en la tabla "evento" en la base de datos.
  */
@@ -163,8 +164,8 @@ public class Evento {
 	}
 
 	/**
-	 * Obtiene el estado real del evento: un evento programado cuya hora de fin ya pasó se considera
-	 * FINALIZADO.
+	 * Obtiene el estado real del evento: un evento programado cuya hora de fin ya
+	 * pasó se considera FINALIZADO.
 	 *
 	 * @return El estado actual
 	 */
@@ -179,7 +180,7 @@ public class Evento {
 	 * Indica si el evento se cruza con un rango de horas del mismo día.
 	 *
 	 * @param inicio Hora de inicio del rango
-	 * @param fin Hora de fin del rango
+	 * @param fin    Hora de fin del rango
 	 * @return true si hay cruce
 	 */
 	public boolean seCruzaCon(LocalTime inicio, LocalTime fin) {
@@ -492,8 +493,8 @@ public class Evento {
 	 */
 	@Override
 	public String toString() {
-		return "Evento [id=" + id + ", titulo=" + titulo + ", tipo=" + tipo + ", fecha=" + fecha + ", estado="
-				+ estado + "]";
+		return "Evento [id=" + id + ", titulo=" + titulo + ", tipo=" + tipo + ", fecha=" + fecha + ", estado=" + estado
+				+ "]";
 	}
 
 }
