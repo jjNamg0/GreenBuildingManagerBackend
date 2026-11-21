@@ -24,7 +24,11 @@ public class ChatDTO {
 	 */
 	public ChatDTO(String mensaje, List<MensajeChatDTO> historial) {
 		this.mensaje = mensaje;
-		this.historial = historial;
+		if (historial == null) {
+			this.historial = null;
+		} else {
+			this.historial = new ArrayList<>(historial);
+		}
 	}
 
 	/**
@@ -60,7 +64,11 @@ public class ChatDTO {
 	 * @param historial Mensajes anteriores de la conversación
 	 */
 	public void setHistorial(List<MensajeChatDTO> historial) {
-		this.historial = historial;
+		if (historial == null) {
+			this.historial = null;
+		} else {
+			this.historial = new ArrayList<>(historial);
+		}
 	}
 
 	/**

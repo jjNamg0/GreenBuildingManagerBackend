@@ -2,8 +2,11 @@ package co.edu.unbosque.GreenBuilding.service;
 
 import co.edu.unbosque.GreenBuilding.dto.ConjuntoDTO;
 import co.edu.unbosque.GreenBuilding.model.Conjunto;
+import co.edu.unbosque.GreenBuilding.model.Asistencia;
 import co.edu.unbosque.GreenBuilding.model.Espacio;
 import co.edu.unbosque.GreenBuilding.model.Evento;
+import co.edu.unbosque.GreenBuilding.model.Reserva;
+import co.edu.unbosque.GreenBuilding.model.Unidad;
 import co.edu.unbosque.GreenBuilding.model.Usuario;
 import co.edu.unbosque.GreenBuilding.repository.AsistenciaRepository;
 import co.edu.unbosque.GreenBuilding.repository.ConjuntoRepository;
@@ -21,8 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que proporciona operaciones CRUD para los conjuntos residenciales de
- * Cundinamarca. Implementa la interfaz CRUDOperation.
+ * Servicio que proporciona operaciones CRUD para los conjuntos residenciales de Cundinamarca.
+ * Implementa la interfaz CRUDOperation.
  */
 @Service
 public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
@@ -40,44 +43,34 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 	private static final double LONGITUD_MAXIMA = -73.0;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired
-	private ConjuntoRepository conjuntoRepo;
+	@Autowired private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a las unidades. */
-	@Autowired
-	private UnidadRepository unidadRepo;
+	@Autowired private UnidadRepository unidadRepo;
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired
-	private EspacioRepository espacioRepo;
+	@Autowired private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a los eventos. */
-	@Autowired
-	private EventoRepository eventoRepo;
+	@Autowired private EventoRepository eventoRepo;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired
-	private ReservaRepository reservaRepo;
+	@Autowired private ReservaRepository reservaRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Repositorio para acceder a las asistencias a eventos. */
-	@Autowired
-	private AsistenciaRepository asistenciaRepo;
+	@Autowired private AsistenciaRepository asistenciaRepo;
 
 	/** Mapeador para convertir entre entidades y DTOs. */
-	@Autowired
-	private ModelMapper modelMapper;
+	@Autowired private ModelMapper modelMapper;
 
 	/** Servicio de auditoría. */
-	@Autowired
-	private AuditoriaService auditoriaServ;
+	@Autowired private AuditoriaService auditoriaServ;
 
 	/** Constructor por defecto. */
-	public ConjuntoService() {
-	}
+	public ConjuntoService() {}
 
 	/**
 	 * Cuenta el número total de conjuntos.
@@ -104,9 +97,8 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 	 * Crea un nuevo conjunto.
 	 *
 	 * @param data DTO con los datos del conjunto
-	 * @return 0 si la creación fue exitosa, 1 si ya existe un conjunto con ese
-	 *         nombre en el mismo municipio, 2 si la ubicación está fuera de
-	 *         Cundinamarca
+	 * @return 0 si la creación fue exitosa, 1 si ya existe un conjunto con ese nombre en el mismo
+	 *     municipio, 2 si la ubicación está fuera de Cundinamarca
 	 */
 	@Override
 	public int create(ConjuntoDTO data) {
@@ -140,16 +132,18 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 	 * Obtiene los conjuntos que coinciden con una búsqueda y un tipo.
 	 *
 	 * @param busqueda Texto a buscar en el nombre, municipio o dirección (opcional)
-	 * @param tipo     APARTAMENTOS o CASAS (opcional)
+	 * @param tipo APARTAMENTOS o CASAS (opcional)
 	 * @return Lista de DTOs de conjuntos
 	 */
 	public List<ConjuntoDTO> getAll(String busqueda, String tipo) {
 		List<ConjuntoDTO> dtoList = new ArrayList<>();
 		for (Conjunto conjunto : conjuntoRepo.findAllByOrderByNombreAsc()) {
-			boolean delTipo = TextoUtil.vacio(tipo) || conjunto.getTipo().name().equalsIgnoreCase(tipo.trim());
-			boolean coincide = TextoUtil.vacio(busqueda) || TextoUtil.contiene(conjunto.getNombre(), busqueda)
-					|| TextoUtil.contiene(conjunto.getMunicipio(), busqueda)
-					|| TextoUtil.contiene(conjunto.getDireccion(), busqueda);
+			boolean delTipo = TextoUtil.vacio(tipo) || conjunto.getTipo().name().equals(tipo.trim().toUpperCase());
+			boolean coincide =
+					TextoUtil.vacio(busqueda)
+							|| TextoUtil.contiene(conjunto.getNombre(), busqueda)
+							|| TextoUtil.contiene(conjunto.getMunicipio(), busqueda)
+							|| TextoUtil.contiene(conjunto.getDireccion(), busqueda);
 			if (delTipo && coincide) {
 				dtoList.add(aDTO(conjunto));
 			}
@@ -158,8 +152,8 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 	}
 
 	/**
-	 * Elimina un conjunto con sus unidades, espacios, eventos y reservas. Los
-	 * usuarios del conjunto quedan sin conjunto ni unidad.
+	 * Elimina un conjunto con sus unidades, espacios, eventos y reservas. Los usuarios del conjunto
+	 * quedan sin conjunto ni unidad.
 	 *
 	 * @param id ID del conjunto a eliminar
 	 * @return 0 si la eliminación fue exitosa, 1 si el conjunto no existe
@@ -176,14 +170,20 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 			usuario.setConjuntoId(null);
 		}
 		for (Evento evento : eventoRepo.findByConjuntoIdOrderByFechaAscHoraInicioAsc(id)) {
-			asistenciaRepo.deleteAll(asistenciaRepo.findByEventoId(evento.getId()));
+			for (Asistencia asistencia : asistenciaRepo.findByEventoId(evento.getId())) {
+				asistenciaRepo.delete(asistencia);
+			}
 			eventoRepo.delete(evento);
 		}
 		for (Espacio espacio : espacioRepo.findByConjuntoIdOrderByNombreAsc(id)) {
-			reservaRepo.deleteAll(reservaRepo.findByEspacioId(espacio.getId()));
+			for (Reserva reserva : reservaRepo.findByEspacioId(espacio.getId())) {
+				reservaRepo.delete(reserva);
+			}
 			espacioRepo.delete(espacio);
 		}
-		unidadRepo.deleteAll(unidadRepo.findByConjuntoIdOrderByAgrupacionAscNumeroAsc(id));
+		for (Unidad unidad : unidadRepo.findByConjuntoIdOrderByAgrupacionAscNumeroAsc(id)) {
+			unidadRepo.delete(unidad);
+		}
 		conjuntoRepo.delete(conjunto);
 		auditoriaServ.registrar("ELIMINAR", "Conjunto", "Eliminó el conjunto " + conjunto.getNombre());
 		return 0;
@@ -192,11 +192,10 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 	/**
 	 * Actualiza un conjunto existente.
 	 *
-	 * @param id      ID del conjunto a actualizar
+	 * @param id ID del conjunto a actualizar
 	 * @param newData DTO con los nuevos datos
-	 * @return 0 si la actualización fue exitosa, 1 si ya existe otro conjunto con
-	 *         ese nombre en el mismo municipio, 2 si el conjunto no existe, 3 si la
-	 *         ubicación está fuera de Cundinamarca
+	 * @return 0 si la actualización fue exitosa, 1 si ya existe otro conjunto con ese nombre en el
+	 *     mismo municipio, 2 si el conjunto no existe, 3 si la ubicación está fuera de Cundinamarca
 	 */
 	@Override
 	public int updateById(Long id, ConjuntoDTO newData) {
@@ -207,8 +206,9 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 		if (!dentroDeCundinamarca(newData)) {
 			return 3;
 		}
-		Optional<Conjunto> repetido = conjuntoRepo.findByNombreIgnoreCaseAndMunicipioIgnoreCase(
-				newData.getNombre().trim(), newData.getMunicipio().trim());
+		Optional<Conjunto> repetido =
+				conjuntoRepo.findByNombreIgnoreCaseAndMunicipioIgnoreCase(
+						newData.getNombre().trim(), newData.getMunicipio().trim());
 		if (repetido.isPresent() && !repetido.get().getId().equals(id)) {
 			return 1;
 		}
@@ -262,8 +262,10 @@ public class ConjuntoService implements CRUDOperation<ConjuntoDTO> {
 	 * @return true si está dentro
 	 */
 	private boolean dentroDeCundinamarca(ConjuntoDTO data) {
-		return data.getLatitud() >= LATITUD_MINIMA && data.getLatitud() <= LATITUD_MAXIMA
-				&& data.getLongitud() >= LONGITUD_MINIMA && data.getLongitud() <= LONGITUD_MAXIMA;
+		return data.getLatitud() >= LATITUD_MINIMA
+				&& data.getLatitud() <= LATITUD_MAXIMA
+				&& data.getLongitud() >= LONGITUD_MINIMA
+				&& data.getLongitud() <= LONGITUD_MAXIMA;
 	}
 
 	/**

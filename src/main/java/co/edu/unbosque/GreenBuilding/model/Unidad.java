@@ -85,7 +85,10 @@ public class Unidad {
 	 * @return La descripción de la unidad
 	 */
 	public String getDescripcion() {
-		String prefijo = tipo == Tipo.CASA ? "Casa" : "Apto";
+		String prefijo = "Apto";
+		if (tipo == Tipo.CASA) {
+			prefijo = "Casa";
+		}
 		return agrupacion + " · " + prefijo + " " + numero;
 	}
 

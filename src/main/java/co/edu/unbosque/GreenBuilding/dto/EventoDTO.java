@@ -434,6 +434,16 @@ public class EventoDTO {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		EventoDTO other = (EventoDTO) obj;
+		return mismosDatosPrincipales(other) && mismosDatosAdicionales(other);
+	}
+
+	/**
+	 * Compara la primera mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosPrincipales(EventoDTO other) {
 		return Objects.equals(id, other.id)
 				&& Objects.equals(conjuntoId, other.conjuntoId)
 				&& Objects.equals(conjuntoNombre, other.conjuntoNombre)
@@ -442,8 +452,17 @@ public class EventoDTO {
 				&& Objects.equals(titulo, other.titulo)
 				&& Objects.equals(descripcion, other.descripcion)
 				&& tipo == other.tipo
-				&& Objects.equals(fecha, other.fecha)
-				&& Objects.equals(horaInicio, other.horaInicio)
+				&& Objects.equals(fecha, other.fecha);
+	}
+
+	/**
+	 * Compara la segunda mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosAdicionales(EventoDTO other) {
+		return Objects.equals(horaInicio, other.horaInicio)
 				&& Objects.equals(horaFin, other.horaFin)
 				&& paraNinos == other.paraNinos
 				&& Objects.equals(cupoMaximo, other.cupoMaximo)

@@ -4,12 +4,14 @@ import co.edu.unbosque.GreenBuilding.dto.FranjaHorariaDTO;
 import co.edu.unbosque.GreenBuilding.dto.ReservaDTO;
 import co.edu.unbosque.GreenBuilding.model.Conjunto;
 import co.edu.unbosque.GreenBuilding.model.Espacio;
+import co.edu.unbosque.GreenBuilding.model.Evento;
 import co.edu.unbosque.GreenBuilding.model.Reserva;
 import co.edu.unbosque.GreenBuilding.model.Reserva.Estado;
 import co.edu.unbosque.GreenBuilding.model.Unidad;
 import co.edu.unbosque.GreenBuilding.model.Usuario;
 import co.edu.unbosque.GreenBuilding.repository.ConjuntoRepository;
 import co.edu.unbosque.GreenBuilding.repository.EspacioRepository;
+import co.edu.unbosque.GreenBuilding.repository.EventoRepository;
 import co.edu.unbosque.GreenBuilding.repository.ReservaRepository;
 import co.edu.unbosque.GreenBuilding.repository.UnidadRepository;
 import co.edu.unbosque.GreenBuilding.repository.UsuarioRepository;
@@ -26,9 +28,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio para las reservas de espacios comunes: disponibilidad por franjas de
- * una hora, creación con validación de cruces y horarios, cancelación por el
- * residente y revisión por el administrador.
+ * Servicio para las reservas de espacios comunes: disponibilidad por franjas de una hora, creación
+ * con validación de cruces y horarios, cancelación por el residente y revisión por el
+ * administrador.
  */
 @Service
 public class ReservaService {
@@ -40,44 +42,40 @@ public class ReservaService {
 	public static final int DIAS_MAXIMOS_ANTICIPACION = 60;
 
 	/** Repositorio para acceder a las reservas. */
-	@Autowired
-	private ReservaRepository reservaRepo;
+	@Autowired private ReservaRepository reservaRepo;
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired
-	private EspacioRepository espacioRepo;
+	@Autowired private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired
-	private ConjuntoRepository conjuntoRepo;
+	@Autowired private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a las unidades. */
-	@Autowired
-	private UnidadRepository unidadRepo;
+	@Autowired private UnidadRepository unidadRepo;
 
 	/** Mapeador para convertir entre entidades y DTOs. */
-	@Autowired
-	private ModelMapper modelMapper;
+	@Autowired private ModelMapper modelMapper;
 
 	/** Servicio de auditoría. */
-	@Autowired
-	private AuditoriaService auditoriaServ;
+	@Autowired private AuditoriaService auditoriaServ;
 
 	/** Servicio de correo. */
-	@Autowired
-	private CorreoService correoServ;
+	@Autowired private CorreoService correoServ;
 
 	/** Servicio que arma el HTML de los correos. */
-	@Autowired
-	private PlantillaCorreoService plantillaServ;
+	@Autowired private PlantillaCorreoService plantillaServ;
+
+	/** Repositorio para acceder a los eventos, para no cruzar una reserva con un evento. */
+	@Autowired private EventoRepository eventoRepo;
+
+	/** Servicio de invitaciones: aviso a los invitados si la reserva se cancela. */
+	@Autowired private InvitacionService invitacionServ;
 
 	/** Constructor por defecto. */
-	public ReservaService() {
-	}
+	public ReservaService() {}
 
 	/**
 	 * Cuenta el número total de reservas.
@@ -140,18 +138,17 @@ public class ReservaService {
 	}
 
 	/**
-	 * Arma las franjas de una hora de un espacio en un día, marcando las ocupadas
-	 * por reservas pendientes o aprobadas y las que ya pasaron.
+	 * Arma las franjas de una hora de un espacio en un día, marcando las ocupadas por reservas
+	 * pendientes o aprobadas, por eventos programados y las que ya pasaron.
 	 *
 	 * @param espacioId ID del espacio
-	 * @param fecha     Fecha AAAA-MM-DD
-	 * @return Lista de franjas, vacía si el espacio es de uso libre, o null si el
-	 *         espacio no existe
+	 * @param fecha Fecha AAAA-MM-DD
+	 * @return Lista de franjas, vacía si el espacio es de uso libre o no existe
 	 */
 	public List<FranjaHorariaDTO> getDisponibilidad(Long espacioId, String fecha) {
 		Optional<Espacio> found = espacioRepo.findById(espacioId);
 		if (!found.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		Espacio espacio = found.get();
 		List<FranjaHorariaDTO> franjas = new ArrayList<>();
@@ -161,39 +158,57 @@ public class ReservaService {
 		LocalDate dia = FechaUtil.leerFecha(fecha);
 		List<Reserva> delDia = reservaRepo.findByEspacioIdAndFecha(espacioId, dia);
 		LocalDateTime ahora = LocalDateTime.now();
-		LocalTime inicio = espacio.getHoraApertura();
-		while (inicio.isBefore(espacio.getHoraCierre())) {
-			LocalTime fin = inicio.plusMinutes(MINUTOS_POR_FRANJA);
-			if (fin.isAfter(espacio.getHoraCierre()) || !fin.isAfter(inicio)) {
-				fin = espacio.getHoraCierre();
-			}
+		for (LocalTime inicio = espacio.getHoraApertura();
+				inicio.isBefore(espacio.getHoraCierre());
+				inicio = finDeFranja(inicio, espacio)) {
+			LocalTime fin = finDeFranja(inicio, espacio);
 			boolean ocupada = false;
 			for (Reserva reserva : delDia) {
 				if (reserva.estaActiva() && reserva.seCruzaCon(inicio, fin)) {
 					ocupada = true;
 				}
 			}
+			for (Evento evento : eventoRepo.findByEspacioIdAndFecha(espacioId, dia)) {
+				if (evento.getEstadoActual() == Evento.Estado.PROGRAMADO && evento.seCruzaCon(inicio, fin)) {
+					ocupada = true;
+				}
+			}
 			boolean pasada = !LocalDateTime.of(dia, inicio).isAfter(ahora);
-			franjas.add(new FranjaHorariaDTO(FechaUtil.hora(inicio), FechaUtil.hora(fin),
-					espacio.isDisponible() && !ocupada && !pasada));
-			inicio = fin;
+			franjas.add(
+					new FranjaHorariaDTO(
+							FechaUtil.hora(inicio),
+							FechaUtil.hora(fin),
+							espacio.isDisponible() && !ocupada && !pasada));
 		}
 		return franjas;
 	}
 
 	/**
-	 * Crea una reserva en estado PENDIENTE para el residente con la sesión
-	 * iniciada.
+	 * Calcula la hora en que termina una franja: una hora después del inicio, o la hora de cierre
+	 * del espacio si llega antes.
+	 *
+	 * @param inicio Hora de inicio de la franja
+	 * @param espacio Espacio con su hora de cierre
+	 * @return Hora de fin de la franja
+	 */
+	private LocalTime finDeFranja(LocalTime inicio, Espacio espacio) {
+		LocalTime fin = inicio.plusMinutes(MINUTOS_POR_FRANJA);
+		if (fin.isAfter(espacio.getHoraCierre()) || !fin.isAfter(inicio)) {
+			fin = espacio.getHoraCierre();
+		}
+		return fin;
+	}
+
+	/**
+	 * Crea una reserva en estado PENDIENTE para el residente con la sesión iniciada.
 	 *
 	 * @param username Correo del residente
-	 * @param data     DTO con el espacio, la fecha, las horas, el motivo y los
-	 *                 asistentes
-	 * @return 0 si la reserva se creó, 1 si el residente no tiene unidad, 2 si el
-	 *         espacio no existe, 3 si el espacio es de otro conjunto, 4 si el
-	 *         espacio es de uso libre, 5 si el espacio no está disponible, 6 si
-	 *         está fuera del horario del espacio, 7 si la fecha u hora ya pasó, 8
-	 *         si supera los días de anticipación, 9 si supera la capacidad, 10 si
-	 *         se cruza con otra reserva
+	 * @param data DTO con el espacio, la fecha, las horas, el motivo y los asistentes
+	 * @return 0 si la reserva se creó, 1 si el residente no tiene unidad, 2 si el espacio no existe,
+	 *     3 si el espacio es de otro conjunto, 4 si el espacio es de uso libre, 5 si el espacio no
+	 *     está disponible, 6 si está fuera del horario del espacio, 7 si la fecha u hora ya pasó, 8
+	 *     si supera los días de anticipación, 9 si supera la capacidad, 10 si se cruza con otra
+	 *     reserva, 11 si se cruza con un evento programado en el espacio
 	 */
 	public int create(String username, ReservaDTO data) {
 		Optional<Usuario> usuario = usuarioRepo.findByUsername(username);
@@ -229,19 +244,33 @@ public class ReservaService {
 		if (seCruza(entity, false)) {
 			return 10;
 		}
+		if (hayEvento(entity)) {
+			return 11;
+		}
 		reservaRepo.save(entity);
-		auditoriaServ.registrar(username, "RESERVA", "Reserva", "Solicitó " + espacio.getNombre() + " el "
-				+ entity.getFecha() + " de " + data.getHoraInicio() + " a " + data.getHoraFin());
+		auditoriaServ.registrar(
+				username,
+				"RESERVA",
+				"Reserva",
+				"Solicitó "
+						+ espacio.getNombre()
+						+ " el "
+						+ entity.getFecha()
+						+ " de "
+						+ data.getHoraInicio()
+						+ " a "
+						+ data.getHoraFin());
 		return 0;
 	}
 
 	/**
-	 * Cancela una reserva del residente con la sesión iniciada.
+	 * Cancela una reserva del residente con la sesión iniciada. Si estaba aprobada, avisa a sus
+	 * invitados.
 	 *
 	 * @param username Correo del residente
-	 * @param id       ID de la reserva
-	 * @return 0 si se canceló, 1 si la reserva no existe, 2 si la reserva es de
-	 *         otro residente, 3 si ya no se puede cancelar
+	 * @param id ID de la reserva
+	 * @return 0 si se canceló, 1 si la reserva no existe, 2 si la reserva es de otro residente, 3 si
+	 *     ya no se puede cancelar
 	 */
 	public int cancelar(String username, Long id) {
 		Optional<Reserva> found = reservaRepo.findById(id);
@@ -255,9 +284,14 @@ public class ReservaService {
 		if (!temp.estaActiva() || !temp.getInicio().isAfter(LocalDateTime.now())) {
 			return 3;
 		}
+		boolean estabaAprobada = temp.getEstado() == Estado.APROBADA;
 		temp.setEstado(Estado.CANCELADA);
 		reservaRepo.save(temp);
-		auditoriaServ.registrar(username, "RESERVA", "Reserva", "Canceló su reserva de " + espacioDe(temp).getNombre());
+		if (estabaAprobada) {
+			invitacionServ.avisarCancelacionReserva(temp);
+		}
+		auditoriaServ.registrar(
+				username, "RESERVA", "Reserva", "Canceló su reserva de " + espacioDe(temp).getNombre());
 		return 0;
 	}
 
@@ -265,8 +299,8 @@ public class ReservaService {
 	 * Aprueba una reserva pendiente y avisa al residente por correo.
 	 *
 	 * @param id ID de la reserva
-	 * @return 0 si se aprobó, 1 si la reserva no existe, 2 si no está pendiente, 3
-	 *         si su fecha ya pasó, 4 si se cruza con otra reserva aprobada
+	 * @return 0 si se aprobó, 1 si la reserva no existe, 2 si no está pendiente, 3 si su fecha ya
+	 *     pasó, 4 si se cruza con otra reserva aprobada o con un evento programado
 	 */
 	public int aprobar(Long id) {
 		Optional<Reserva> found = reservaRepo.findById(id);
@@ -278,27 +312,31 @@ public class ReservaService {
 		if (revision != 0) {
 			return revision;
 		}
-		if (seCruza(temp, true)) {
+		if (seCruza(temp, true) || hayEvento(temp)) {
 			return 4;
 		}
 		temp.setEstado(Estado.APROBADA);
 		temp.setObservacion(null);
 		reservaRepo.save(temp);
-		correoServ.enviarHtml(usuarioDe(temp).getUsername(), "Tu reserva fue aprobada",
-				plantillaServ.estadoReserva(temp));
-		auditoriaServ.registrar("RESERVA", "Reserva",
-				"Aprobó la reserva de " + usuarioDe(temp).getNombreCompleto() + " en " + espacioDe(temp).getNombre());
+		correoServ.enviarHtml(
+				usuarioDe(temp).getUsername(), "Tu reserva fue aprobada", plantillaServ.estadoReserva(temp));
+		auditoriaServ.registrar(
+				"RESERVA",
+				"Reserva",
+				"Aprobó la reserva de "
+						+ usuarioDe(temp).getNombreCompleto()
+						+ " en "
+						+ espacioDe(temp).getNombre());
 		return 0;
 	}
 
 	/**
-	 * Rechaza una reserva pendiente con una observación y avisa al residente por
-	 * correo.
+	 * Rechaza una reserva pendiente con una observación y avisa al residente por correo.
 	 *
-	 * @param id          ID de la reserva
+	 * @param id ID de la reserva
 	 * @param observacion Motivo del rechazo
-	 * @return 0 si se rechazó, 1 si la reserva no existe, 2 si no está pendiente, 3
-	 *         si su fecha ya pasó
+	 * @return 0 si se rechazó, 1 si la reserva no existe, 2 si no está pendiente, 3 si su fecha ya
+	 *     pasó
 	 */
 	public int rechazar(Long id, String observacion) {
 		Optional<Reserva> found = reservaRepo.findById(id);
@@ -313,10 +351,17 @@ public class ReservaService {
 		temp.setEstado(Estado.RECHAZADA);
 		temp.setObservacion(TextoUtil.limpiar(observacion));
 		reservaRepo.save(temp);
-		correoServ.enviarHtml(usuarioDe(temp).getUsername(), "Tu reserva fue rechazada",
-				plantillaServ.estadoReserva(temp));
-		auditoriaServ.registrar("RESERVA", "Reserva", "Rechazó la reserva de " + usuarioDe(temp).getNombreCompleto()
-				+ " en " + espacioDe(temp).getNombre() + ": " + temp.getObservacion());
+		correoServ.enviarHtml(
+				usuarioDe(temp).getUsername(), "Tu reserva fue rechazada", plantillaServ.estadoReserva(temp));
+		auditoriaServ.registrar(
+				"RESERVA",
+				"Reserva",
+				"Rechazó la reserva de "
+						+ usuarioDe(temp).getNombreCompleto()
+						+ " en "
+						+ espacioDe(temp).getNombre()
+						+ ": "
+						+ temp.getObservacion());
 		return 0;
 	}
 
@@ -340,8 +385,8 @@ public class ReservaService {
 	 * Revisa el horario, la fecha y la capacidad de una reserva nueva.
 	 *
 	 * @param reserva Reserva a revisar
-	 * @return 0 si es válida, 6 si está fuera del horario, 7 si ya pasó, 8 si
-	 *         supera la anticipación, 9 si supera la capacidad
+	 * @return 0 si es válida, 6 si está fuera del horario, 7 si ya pasó, 8 si supera la
+	 *     anticipación, 9 si supera la capacidad
 	 */
 	private int validarFechaYCupo(Reserva reserva) {
 		Espacio espacio = espacioDe(reserva);
@@ -364,15 +409,34 @@ public class ReservaService {
 	/**
 	 * Indica si una reserva se cruza con otra del mismo espacio y día.
 	 *
-	 * @param reserva       Reserva a revisar
+	 * @param reserva Reserva a revisar
 	 * @param soloAprobadas true para comparar solo con reservas aprobadas
 	 * @return true si hay cruce
 	 */
 	private boolean seCruza(Reserva reserva, boolean soloAprobadas) {
 		for (Reserva otra : reservaRepo.findByEspacioIdAndFecha(reserva.getEspacioId(), reserva.getFecha())) {
-			boolean cuenta = soloAprobadas ? otra.getEstado() == Estado.APROBADA : otra.estaActiva();
+			boolean cuenta = otra.estaActiva();
+			if (soloAprobadas) {
+				cuenta = otra.getEstado() == Estado.APROBADA;
+			}
 			boolean esLaMisma = reserva.getId() != null && reserva.getId().equals(otra.getId());
 			if (cuenta && !esLaMisma && otra.seCruzaCon(reserva.getHoraInicio(), reserva.getHoraFin())) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Indica si una reserva se cruza con un evento programado en el mismo espacio y día.
+	 *
+	 * @param reserva Reserva a revisar
+	 * @return true si hay cruce
+	 */
+	private boolean hayEvento(Reserva reserva) {
+		for (Evento evento : eventoRepo.findByEspacioIdAndFecha(reserva.getEspacioId(), reserva.getFecha())) {
+			if (evento.getEstadoActual() == Evento.Estado.PROGRAMADO
+					&& evento.seCruzaCon(reserva.getHoraInicio(), reserva.getHoraFin())) {
 				return true;
 			}
 		}
@@ -392,8 +456,7 @@ public class ReservaService {
 	}
 
 	/**
-	 * Convierte una reserva en DTO con los nombres del conjunto, el residente y su
-	 * unidad.
+	 * Convierte una reserva en DTO con los nombres del conjunto, el residente y su unidad.
 	 *
 	 * @param reserva Reserva a convertir
 	 * @return DTO de la reserva
@@ -421,7 +484,10 @@ public class ReservaService {
 	 */
 	private Espacio espacioDe(Reserva reserva) {
 		Optional<Espacio> found = espacioRepo.findById(reserva.getEspacioId());
-		return found.isPresent() ? found.get() : new Espacio();
+		if (found.isPresent()) {
+			return found.get();
+		}
+		return new Espacio();
 	}
 
 	/**
@@ -432,7 +498,10 @@ public class ReservaService {
 	 */
 	private Usuario usuarioDe(Reserva reserva) {
 		Optional<Usuario> found = usuarioRepo.findById(reserva.getUsuarioId());
-		return found.isPresent() ? found.get() : new Usuario();
+		if (found.isPresent()) {
+			return found.get();
+		}
+		return new Usuario();
 	}
 
 	/**
@@ -446,7 +515,10 @@ public class ReservaService {
 			return null;
 		}
 		Optional<Conjunto> found = conjuntoRepo.findById(id);
-		return found.isPresent() ? found.get().getNombre() : null;
+		if (found.isPresent()) {
+			return found.get().getNombre();
+		}
+		return null;
 	}
 
 	/**
@@ -460,6 +532,9 @@ public class ReservaService {
 			return "Sin unidad";
 		}
 		Optional<Unidad> found = unidadRepo.findById(id);
-		return found.isPresent() ? found.get().getDescripcion() : "Sin unidad";
+		if (found.isPresent()) {
+			return found.get().getDescripcion();
+		}
+		return "Sin unidad";
 	}
 }

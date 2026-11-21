@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -26,7 +27,11 @@ public class RespuestaOsrmDTO {
 	 */
 	public RespuestaOsrmDTO(String code, List<RutaOsrmDTO> routes) {
 		this.code = code;
-		this.routes = routes;
+		if (routes == null) {
+			this.routes = null;
+		} else {
+			this.routes = new ArrayList<>(routes);
+		}
 	}
 
 	/**
@@ -62,7 +67,11 @@ public class RespuestaOsrmDTO {
 	 * @param routes Rutas encontradas; se usa la primera
 	 */
 	public void setRoutes(List<RutaOsrmDTO> routes) {
-		this.routes = routes;
+		if (routes == null) {
+			this.routes = null;
+		} else {
+			this.routes = new ArrayList<>(routes);
+		}
 	}
 
 	/**

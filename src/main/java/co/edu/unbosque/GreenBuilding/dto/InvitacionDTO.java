@@ -398,14 +398,41 @@ public class InvitacionDTO {
 		if (getClass() != obj.getClass())
 			return false;
 		InvitacionDTO other = (InvitacionDTO) obj;
-		return Objects.equals(tipo, other.tipo) && Objects.equals(titulo, other.titulo)
-				&& Objects.equals(descripcion, other.descripcion) && Objects.equals(anfitrion, other.anfitrion)
-				&& Objects.equals(fecha, other.fecha) && Objects.equals(horaInicio, other.horaInicio)
-				&& Objects.equals(horaFin, other.horaFin) && plantilla == other.plantilla
-				&& Objects.equals(estado, other.estado) && Objects.equals(motivoCancelacion, other.motivoCancelacion)
-				&& Objects.equals(conjuntoId, other.conjuntoId) && Objects.equals(conjuntoNombre, other.conjuntoNombre)
-				&& Objects.equals(direccion, other.direccion) && Objects.equals(municipio, other.municipio)
-				&& Objects.equals(latitud, other.latitud) && Objects.equals(longitud, other.longitud)
+		return mismosDatosPrincipales(other) && mismosDatosAdicionales(other);
+	}
+
+	/**
+	 * Compara la primera mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosPrincipales(InvitacionDTO other) {
+		return Objects.equals(tipo, other.tipo)
+				&& Objects.equals(titulo, other.titulo)
+				&& Objects.equals(descripcion, other.descripcion)
+				&& Objects.equals(anfitrion, other.anfitrion)
+				&& Objects.equals(fecha, other.fecha)
+				&& Objects.equals(horaInicio, other.horaInicio)
+				&& Objects.equals(horaFin, other.horaFin)
+				&& plantilla == other.plantilla
+				&& Objects.equals(estado, other.estado);
+	}
+
+	/**
+	 * Compara la segunda mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosAdicionales(InvitacionDTO other) {
+		return Objects.equals(motivoCancelacion, other.motivoCancelacion)
+				&& Objects.equals(conjuntoId, other.conjuntoId)
+				&& Objects.equals(conjuntoNombre, other.conjuntoNombre)
+				&& Objects.equals(direccion, other.direccion)
+				&& Objects.equals(municipio, other.municipio)
+				&& Objects.equals(latitud, other.latitud)
+				&& Objects.equals(longitud, other.longitud)
 				&& Objects.equals(espacioNombre, other.espacioNombre);
 	}
 
