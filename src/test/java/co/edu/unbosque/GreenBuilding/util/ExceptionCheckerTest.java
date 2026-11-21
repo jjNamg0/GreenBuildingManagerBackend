@@ -1,7 +1,10 @@
 package co.edu.unbosque.GreenBuilding.util;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+<<<<<<< HEAD
 import static org.junit.jupiter.api.Assertions.assertEquals;
+=======
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import co.edu.unbosque.GreenBuilding.exception.CoordinateNotValidException;
@@ -9,12 +12,18 @@ import co.edu.unbosque.GreenBuilding.exception.DateNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmailNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+<<<<<<< HEAD
 import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.PasswordNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.PhoneNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.UrlNotValidException;
+=======
+import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.PasswordNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -47,7 +56,11 @@ class ExceptionCheckerTest {
 	 */
 	@Test
 	void testCheckEmail() {
+<<<<<<< HEAD
 		assertDoesNotThrow(() -> ExceptionChecker.checkEmail("ana@gmail.com"), "Debe aceptar el correo");
+=======
+		assertDoesNotThrow(() -> ExceptionChecker.checkEmail("ana@correo.com"), "Debe aceptar el correo");
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 		assertThrows(
 				EmailNotValidException.class,
 				() -> ExceptionChecker.checkEmail("ana.correo.com"),
@@ -133,13 +146,18 @@ class ExceptionCheckerTest {
 				EmailNotValidException.class,
 				() -> ExceptionChecker.checkEmails(correos),
 				"Debe rechazar una lista vacía");
+<<<<<<< HEAD
 		correos.add("bien@gmail.com");
+=======
+		correos.add("bien@correo.com");
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 		correos.add("mal");
 		assertThrows(
 				EmailNotValidException.class,
 				() -> ExceptionChecker.checkEmails(correos),
 				"Debe rechazar la lista si un correo es inválido");
 	}
+<<<<<<< HEAD
 
 	/**
 	 * Prueba que solo se acepten correos de los dominios permitidos, sin importar mayúsculas.
@@ -253,4 +271,6 @@ class ExceptionCheckerTest {
 				() -> ExceptionChecker.checkLocation(4.86, 44205.94),
 				"Debe rechazar una longitud mayor a 180");
 	}
+=======
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 }

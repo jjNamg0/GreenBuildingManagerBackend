@@ -24,7 +24,10 @@ import co.edu.unbosque.GreenBuilding.repository.ConjuntoRepository;
 import co.edu.unbosque.GreenBuilding.repository.ReservaRepository;
 import co.edu.unbosque.GreenBuilding.repository.UnidadRepository;
 import co.edu.unbosque.GreenBuilding.repository.UsuarioRepository;
+<<<<<<< HEAD
 import java.time.LocalDateTime;
+=======
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -269,6 +272,7 @@ class UsuarioServiceTest {
 		assertEquals(1, usuarioServ.validateCredentials(CORREO, "mala"), "Una clave incorrecta debe devolver 1");
 		assertEquals(1, usuarioServ.validateCredentials("nadie@correo.com", "x"), "Un usuario inexistente debe devolver 1");
 	}
+<<<<<<< HEAD
 
 	/**
 	 * Prueba que el quinto intento fallido seguido bloquee el inicio de sesión y reinicie el conteo.
@@ -324,4 +328,6 @@ class UsuarioServiceTest {
 		verify(usuarioRepo).save(usuario);
 		assertEquals(1, usuarioServ.reiniciarIntentos("nadie@correo.com"), "Un usuario inexistente debe devolver 1");
 	}
+=======
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 }
