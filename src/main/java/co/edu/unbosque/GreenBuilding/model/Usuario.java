@@ -1,5 +1,7 @@
 package co.edu.unbosque.GreenBuilding.model;
 
+import co.edu.unbosque.GreenBuilding.util.TextoUtil;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -119,6 +121,16 @@ public class Usuario implements UserDetails {
 	private LocalDateTime fechaRegistro;
 
 	/**
+	 * Número de intentos fallidos de inicio de sesión seguidos.
+	 */
+	private int intentosFallidos;
+
+	/**
+	 * Fecha y hora hasta la que el inicio de sesión está bloqueado por demasiados intentos fallidos.
+	 */
+	private LocalDateTime bloqueadoHasta;
+
+	/**
 	 * Constructor por defecto.
 	 * Inicializa un usuario con valores predeterminados:
 	 * - Cuenta activa y sin verificar
@@ -180,7 +192,14 @@ public class Usuario implements UserDetails {
 	 * @return Nombre completo
 	 */
 	public String getNombreCompleto() {
-		return ((nombre == null ? "" : nombre) + " " + (apellido == null ? "" : apellido)).trim();
+		String completo = "";
+		if (nombre != null) {
+			completo = nombre;
+		}
+		if (apellido != null) {
+			completo = completo + " " + apellido;
+		}
+		return completo.trim();
 	}
 
 	/**
@@ -501,13 +520,10 @@ public class Usuario implements UserDetails {
 	 */
 	public List<String> interesesComoLista() {
 		List<String> lista = new ArrayList<>();
-		if (interesesGuardados == null || interesesGuardados.isBlank()) {
+		if (TextoUtil.vacio(interesesGuardados)) {
 			return lista;
 		}
-		for (String interes : interesesGuardados.split(",")) {
-			lista.add(interes);
-		}
-		return lista;
+		return TextoUtil.separarPorComas(interesesGuardados);
 	}
 
 	/**
@@ -526,6 +542,42 @@ public class Usuario implements UserDetails {
 	 */
 	public void setFechaRegistro(LocalDateTime fechaRegistro) {
 		this.fechaRegistro = fechaRegistro;
+	}
+
+	/**
+	 * Obtiene el número de intentos fallidos de inicio de sesión seguidos.
+	 *
+	 * @return Los intentos fallidos
+	 */
+	public int getIntentosFallidos() {
+		return intentosFallidos;
+	}
+
+	/**
+	 * Establece el número de intentos fallidos de inicio de sesión seguidos.
+	 *
+	 * @param intentosFallidos Los intentos fallidos
+	 */
+	public void setIntentosFallidos(int intentosFallidos) {
+		this.intentosFallidos = intentosFallidos;
+	}
+
+	/**
+	 * Obtiene la fecha y hora hasta la que el inicio de sesión está bloqueado.
+	 *
+	 * @return La fecha del fin del bloqueo, o null si no está bloqueado
+	 */
+	public LocalDateTime getBloqueadoHasta() {
+		return bloqueadoHasta;
+	}
+
+	/**
+	 * Establece la fecha y hora hasta la que el inicio de sesión está bloqueado.
+	 *
+	 * @param bloqueadoHasta La fecha del fin del bloqueo, o null para quitarlo
+	 */
+	public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
+		this.bloqueadoHasta = bloqueadoHasta;
 	}
 
 	/**

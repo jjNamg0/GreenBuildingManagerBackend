@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/ruta")
-@CrossOrigin(origins = { "http://localhost:4200", "http://localhost:8080" })
+@CrossOrigin(origins = { "https://greenbuildingmanager.netlify.app/" })
 @Transactional
 @Tag(name = "Rutas", description = "Cálculo de rutas con OSRM")
 public class RutaController {
