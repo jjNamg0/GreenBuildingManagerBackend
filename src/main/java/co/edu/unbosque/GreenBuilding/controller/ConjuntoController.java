@@ -4,7 +4,9 @@ import co.edu.unbosque.GreenBuilding.dto.ConjuntoDTO;
 import co.edu.unbosque.GreenBuilding.exception.CoordinateNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.UrlNotValidException;
 import co.edu.unbosque.GreenBuilding.service.ConjuntoService;
 import co.edu.unbosque.GreenBuilding.util.ExceptionChecker;
 import io.swagger.v3.oas.annotations.Operation;
@@ -426,10 +428,19 @@ public class ConjuntoController {
 			ExceptionChecker.checkCharacters(data.getDireccion());
 			ExceptionChecker.checkCharacters(data.getMunicipio());
 			ExceptionChecker.checkCharacters(data.getDescripcion());
+			ExceptionChecker.checkLength("nombre", data.getNombre(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength("dirección", data.getDireccion(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength("municipio", data.getMunicipio(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength(
+					"descripción", data.getDescripcion(), ExceptionChecker.MAX_DESCRIPCION);
+			ExceptionChecker.checkLength("imagen", data.getImagenUrl(), ExceptionChecker.MAX_URL);
+			ExceptionChecker.checkUrl(data.getImagenUrl());
 			ExceptionChecker.checkSelected("Elige el tipo de conjunto.", data.getTipo());
 			ExceptionChecker.checkLocation(data.getLatitud(), data.getLongitud());
 		} catch (EmptyFieldException
 				| InvalidCharactersException
+				| LengthNotValidException
+				| UrlNotValidException
 				| OptionNotValidException
 				| CoordinateNotValidException e) {
 			return e.getMessage();

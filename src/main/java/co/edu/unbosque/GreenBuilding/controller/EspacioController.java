@@ -3,9 +3,11 @@ package co.edu.unbosque.GreenBuilding.controller;
 import co.edu.unbosque.GreenBuilding.dto.EspacioDTO;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.UrlNotValidException;
 import co.edu.unbosque.GreenBuilding.service.ConjuntoService;
 import co.edu.unbosque.GreenBuilding.service.EspacioService;
 import co.edu.unbosque.GreenBuilding.util.ExceptionChecker;
@@ -450,12 +452,19 @@ public class EspacioController {
 			ExceptionChecker.checkEmpty("nombre", data.getNombre());
 			ExceptionChecker.checkCharacters(data.getNombre());
 			ExceptionChecker.checkCharacters(data.getDescripcion());
+			ExceptionChecker.checkLength("nombre", data.getNombre(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength(
+					"descripción", data.getDescripcion(), ExceptionChecker.MAX_DESCRIPCION);
+			ExceptionChecker.checkLength("imagen", data.getImagenUrl(), ExceptionChecker.MAX_URL);
+			ExceptionChecker.checkUrl(data.getImagenUrl());
 			ExceptionChecker.checkPositive("capacidad", data.getCapacidad());
 			ExceptionChecker.checkTimeRange(data.getHoraApertura(), data.getHoraCierre());
 			ExceptionChecker.checkSelected("Elige el conjunto.", data.getConjuntoId());
 			ExceptionChecker.checkSelected("Elige el tipo de espacio.", data.getTipo());
 		} catch (EmptyFieldException
 				| InvalidCharactersException
+				| LengthNotValidException
+				| UrlNotValidException
 				| NumberNotValidException
 				| TimeNotValidException
 				| OptionNotValidException e) {

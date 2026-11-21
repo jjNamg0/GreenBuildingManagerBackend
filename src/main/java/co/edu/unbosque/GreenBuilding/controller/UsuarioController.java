@@ -4,8 +4,10 @@ import co.edu.unbosque.GreenBuilding.dto.CambioPasswordDTO;
 import co.edu.unbosque.GreenBuilding.dto.UsuarioDTO;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.PasswordNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.PhoneNotValidException;
 import co.edu.unbosque.GreenBuilding.service.UsuarioService;
 import co.edu.unbosque.GreenBuilding.util.ExceptionChecker;
 import co.edu.unbosque.GreenBuilding.util.TextoUtil;
@@ -162,7 +164,13 @@ public class UsuarioController {
 			ExceptionChecker.checkEmpty("teléfono", newUser.getTelefono());
 			ExceptionChecker.checkCharacters(newUser.getNombre());
 			ExceptionChecker.checkCharacters(newUser.getApellido());
-		} catch (EmptyFieldException | InvalidCharactersException e) {
+			ExceptionChecker.checkLength("nombre", newUser.getNombre(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength("apellido", newUser.getApellido(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkPhone(newUser.getTelefono());
+		} catch (EmptyFieldException
+				| InvalidCharactersException
+				| LengthNotValidException
+				| PhoneNotValidException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		int status = usuarioServ.updateMe(SecurityContextHolder.getContext().getAuthentication().getName(), newUser);
@@ -516,7 +524,13 @@ public class UsuarioController {
 			ExceptionChecker.checkEmpty("apellido", newUser.getApellido());
 			ExceptionChecker.checkCharacters(newUser.getNombre());
 			ExceptionChecker.checkCharacters(newUser.getApellido());
-		} catch (EmptyFieldException | InvalidCharactersException e) {
+			ExceptionChecker.checkLength("nombre", newUser.getNombre(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength("apellido", newUser.getApellido(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkPhone(newUser.getTelefono());
+		} catch (EmptyFieldException
+				| InvalidCharactersException
+				| LengthNotValidException
+				| PhoneNotValidException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		int status = usuarioServ.updateById(id, newUser);

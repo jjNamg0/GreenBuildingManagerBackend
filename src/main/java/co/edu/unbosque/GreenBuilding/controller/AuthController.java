@@ -5,8 +5,10 @@ import co.edu.unbosque.GreenBuilding.dto.UsuarioDTO;
 import co.edu.unbosque.GreenBuilding.exception.EmailNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.PasswordNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.PhoneNotValidException;
 import co.edu.unbosque.GreenBuilding.model.Usuario;
 import co.edu.unbosque.GreenBuilding.security.JwtUtil;
 import co.edu.unbosque.GreenBuilding.service.AuditoriaService;
@@ -56,6 +58,12 @@ public class AuthController {
 
 	/** Mensaje de credenciales incorrectas. */
 	private static final String CREDENCIALES_INVALIDAS = "Correo o contraseña incorrectos.";
+
+	/** Mensaje de inicio de sesión bloqueado por demasiados intentos fallidos. */
+	private static final String LOGIN_BLOQUEADO =
+			"Superaste el número de intentos. Espera "
+					+ UsuarioService.MINUTOS_BLOQUEO_LOGIN
+					+ " minutos e intenta de nuevo.";
 
 	/** Mensaje de solicitud de código procesada, sin revelar si el correo existe. */
 	private static final String CODIGO_ENVIADO =
@@ -113,6 +121,7 @@ public class AuthController {
 			* Correo o contraseña incorrectos (401)
 			* Cuenta sin verificar (403): el front lleva a la pantalla del código
 			* Cuenta desactivada (401)
+			* Acceso bloqueado por 15 minutos después de 5 intentos fallidos seguidos (429)
 
 			**Uso del token:** inclúyelo en el encabezado `Authorization: Bearer tu_token_jwt`.
 		""")
@@ -150,7 +159,18 @@ public class AuthController {
 												@ExampleObject(
 														value =
 																"Tu cuenta aún no está verificada. Escribe el código que te"
-																		+ " enviamos al correo.")))
+																		+ " enviamos al correo."))),
+				@ApiResponse(
+						responseCode = "429",
+						description = "Demasiados intentos fallidos",
+						content =
+								@Content(
+										mediaType = "text/plain",
+										examples =
+												@ExampleObject(
+														value =
+																"Superaste el número de intentos. Espera 15 minutos e intenta"
+																		+ " de nuevo.")))
 			})
 	@PostMapping("/login")
 	public ResponseEntity<?> login(
@@ -174,11 +194,17 @@ public class AuthController {
 		if (loginRequest.getPassword() != null) {
 			password = loginRequest.getPassword();
 		}
+		if (usuarioServ.loginBloqueado(username)) {
+			auditoriaServ.registrar(
+					username, "LOGIN", "Usuario", "Intento de inicio de sesión con el acceso bloqueado");
+			return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(LOGIN_BLOQUEADO);
+		}
 		try {
 			Authentication authentication =
 					authenticationManager.authenticate(
 							new UsernamePasswordAuthenticationToken(username, password));
 			UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+			usuarioServ.reiniciarIntentos(userDetails.getUsername());
 			String jwt = jwtUtil.generateToken(userDetails);
 			String role = null;
 			if (userDetails instanceof Usuario) {
@@ -195,18 +221,35 @@ public class AuthController {
 						.body(
 								"Tu cuenta está desactivada. Comunícate con la administración de tu conjunto.");
 			}
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
+			return intentoFallido(username);
 		} catch (DisabledException e) {
 			if (usuarioServ.validateCredentials(username, password) == 0) {
 				return ResponseEntity.status(HttpStatus.FORBIDDEN)
 						.body(
 								"Tu cuenta aún no está verificada. Escribe el código que te enviamos al correo.");
 			}
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
+			return intentoFallido(username);
 		} catch (AuthenticationException e) {
 			auditoriaServ.registrar(null, "LOGIN", "Usuario", "Intento fallido con " + username);
-			return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
+			return intentoFallido(username);
 		}
+	}
+
+	/**
+	 * Suma un intento fallido de inicio de sesión y arma la respuesta. Si el usuario llegó al máximo
+	 * de intentos, avisa que el acceso quedó bloqueado.
+	 *
+	 * @param username Correo con el que se intentó iniciar sesión
+	 * @return ResponseEntity con el mensaje de credenciales incorrectas o de acceso bloqueado
+	 */
+	private ResponseEntity<?> intentoFallido(String username) {
+		int status = usuarioServ.registrarIntentoFallido(username);
+		if (status == 1) {
+			auditoriaServ.registrar(
+					username, "LOGIN", "Usuario", "Inicio de sesión bloqueado por intentos fallidos");
+			return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(LOGIN_BLOQUEADO);
+		}
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(CREDENCIALES_INVALIDAS);
 	}
 
 	/**
@@ -289,11 +332,19 @@ public class AuthController {
 			ExceptionChecker.checkCharacters(registerRequest.getNombre());
 			ExceptionChecker.checkCharacters(registerRequest.getApellido());
 			ExceptionChecker.checkCharacters(registerRequest.getUnidadSolicitada());
+			ExceptionChecker.checkLength("nombre", registerRequest.getNombre(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength(
+					"apellido", registerRequest.getApellido(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength(
+					"unidad solicitada", registerRequest.getUnidadSolicitada(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkPhone(registerRequest.getTelefono());
 			ExceptionChecker.checkEmail(registerRequest.getUsername());
 			ExceptionChecker.checkPassword(registerRequest.getPassword());
 			ExceptionChecker.checkSelected("Elige tu conjunto.", registerRequest.getConjuntoId());
 		} catch (EmptyFieldException
 				| InvalidCharactersException
+				| LengthNotValidException
+				| PhoneNotValidException
 				| EmailNotValidException
 				| PasswordNotValidException
 				| OptionNotValidException e) {

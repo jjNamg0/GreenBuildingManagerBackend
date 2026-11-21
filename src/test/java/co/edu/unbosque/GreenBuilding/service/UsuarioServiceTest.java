@@ -24,6 +24,10 @@ import co.edu.unbosque.GreenBuilding.repository.ConjuntoRepository;
 import co.edu.unbosque.GreenBuilding.repository.ReservaRepository;
 import co.edu.unbosque.GreenBuilding.repository.UnidadRepository;
 import co.edu.unbosque.GreenBuilding.repository.UsuarioRepository;
+<<<<<<< HEAD
+import java.time.LocalDateTime;
+=======
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -268,4 +272,62 @@ class UsuarioServiceTest {
 		assertEquals(1, usuarioServ.validateCredentials(CORREO, "mala"), "Una clave incorrecta debe devolver 1");
 		assertEquals(1, usuarioServ.validateCredentials("nadie@correo.com", "x"), "Un usuario inexistente debe devolver 1");
 	}
+<<<<<<< HEAD
+
+	/**
+	 * Prueba que el quinto intento fallido seguido bloquee el inicio de sesión y reinicie el conteo.
+	 */
+	@Test
+	void testRegistrarIntentoFallidoBloquea() {
+		Usuario usuario = new Usuario(CORREO, "hash", Role.USER);
+		usuario.setIntentosFallidos(UsuarioService.MAX_INTENTOS_LOGIN - 2);
+		when(usuarioRepo.findByUsername(CORREO)).thenReturn(Optional.of(usuario));
+		when(usuarioRepo.findByUsername("nadie@correo.com")).thenReturn(Optional.empty());
+
+		assertEquals(0, usuarioServ.registrarIntentoFallido(CORREO), "El cuarto intento solo debe sumarse");
+		assertEquals(4, usuario.getIntentosFallidos(), "Debe llevar 4 intentos");
+		assertNull(usuario.getBloqueadoHasta(), "Aún no debe estar bloqueado");
+
+		assertEquals(1, usuarioServ.registrarIntentoFallido(CORREO), "El quinto intento debe devolver 1");
+		assertEquals(0, usuario.getIntentosFallidos(), "El conteo debe volver a cero");
+		assertTrue(usuario.getBloqueadoHasta().isAfter(LocalDateTime.now()), "Debe quedar bloqueado");
+		assertEquals(2, usuarioServ.registrarIntentoFallido("nadie@correo.com"), "Un usuario inexistente debe devolver 2");
+	}
+
+	/**
+	 * Prueba que el bloqueo solo cuente mientras no haya pasado su hora de fin.
+	 */
+	@Test
+	void testLoginBloqueado() {
+		Usuario usuario = new Usuario(CORREO, "hash", Role.USER);
+		when(usuarioRepo.findByUsername(CORREO)).thenReturn(Optional.of(usuario));
+		when(usuarioRepo.findByUsername("nadie@correo.com")).thenReturn(Optional.empty());
+
+		assertFalse(usuarioServ.loginBloqueado(CORREO), "Sin bloqueo debe devolver false");
+		usuario.setBloqueadoHasta(LocalDateTime.now().plusMinutes(10));
+		assertTrue(usuarioServ.loginBloqueado(CORREO), "Con un bloqueo vigente debe devolver true");
+		usuario.setBloqueadoHasta(LocalDateTime.now().minusMinutes(1));
+		assertFalse(usuarioServ.loginBloqueado(CORREO), "Un bloqueo vencido no debe contar");
+		assertFalse(usuarioServ.loginBloqueado("nadie@correo.com"), "Un usuario inexistente no está bloqueado");
+	}
+
+	/**
+	 * Prueba que un inicio de sesión exitoso borre los intentos y el bloqueo.
+	 */
+	@Test
+	void testReiniciarIntentos() {
+		Usuario usuario = new Usuario(CORREO, "hash", Role.USER);
+		usuario.setIntentosFallidos(3);
+		usuario.setBloqueadoHasta(LocalDateTime.now().minusMinutes(1));
+		when(usuarioRepo.findByUsername(CORREO)).thenReturn(Optional.of(usuario));
+		when(usuarioRepo.findByUsername("nadie@correo.com")).thenReturn(Optional.empty());
+
+		assertEquals(0, usuarioServ.reiniciarIntentos(CORREO), "Debe devolver 0");
+		assertEquals(0, usuario.getIntentosFallidos(), "Debe borrar los intentos");
+		assertNull(usuario.getBloqueadoHasta(), "Debe quitar el bloqueo");
+		verify(usuarioRepo).save(usuario);
+		assertEquals(1, usuarioServ.reiniciarIntentos("nadie@correo.com"), "Un usuario inexistente debe devolver 1");
+	}
+=======
+>>>>>>> 2b4822b4030f007735f2c8baacfd4f174537e49a
 }

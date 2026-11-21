@@ -33,7 +33,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/ia")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
+@CrossOrigin(origins = { "https://greenbuildingmanager.netlify.app/" })
 @Transactional
 @Tag(name = "Asistente", description = "Chat de ayuda con inteligencia artificial")
 @SecurityRequirement(name = "bearerAuth")

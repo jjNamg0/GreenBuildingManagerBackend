@@ -3,6 +3,7 @@ package co.edu.unbosque.GreenBuilding.controller;
 import co.edu.unbosque.GreenBuilding.dto.UnidadDTO;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.service.ConjuntoService;
 import co.edu.unbosque.GreenBuilding.service.UnidadService;
@@ -468,9 +469,14 @@ public class UnidadController {
 			ExceptionChecker.checkEmpty("número", data.getNumero());
 			ExceptionChecker.checkCharacters(data.getAgrupacion());
 			ExceptionChecker.checkCharacters(data.getNumero());
+			ExceptionChecker.checkLength("agrupación", data.getAgrupacion(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength("número", data.getNumero(), ExceptionChecker.MAX_TEXTO);
 			ExceptionChecker.checkSelected("Elige el conjunto.", data.getConjuntoId());
 			ExceptionChecker.checkSelected("Elige el tipo de unidad.", data.getTipo());
-		} catch (EmptyFieldException | InvalidCharactersException | OptionNotValidException e) {
+		} catch (EmptyFieldException
+				| InvalidCharactersException
+				| LengthNotValidException
+				| OptionNotValidException e) {
 			return e.getMessage();
 		}
 		return null;

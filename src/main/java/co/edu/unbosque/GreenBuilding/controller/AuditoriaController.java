@@ -29,7 +29,8 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/auditoria")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
+
+@CrossOrigin(origins = { "https://greenbuildingmanager.netlify.app/" })
 @Transactional
 @Tag(name = "Auditoría", description = "Registro de acciones de los usuarios")
 @SecurityRequirement(name = "bearerAuth")

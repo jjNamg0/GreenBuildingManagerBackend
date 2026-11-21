@@ -16,6 +16,7 @@ import co.edu.unbosque.GreenBuilding.repository.ReservaRepository;
 import co.edu.unbosque.GreenBuilding.repository.UnidadRepository;
 import co.edu.unbosque.GreenBuilding.repository.UsuarioRepository;
 import co.edu.unbosque.GreenBuilding.util.TextoUtil;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -42,6 +43,12 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 	/** Filtros válidos para la lista de usuarios. */
 	public static final List<String> FILTROS_VALIDOS =
 			List.of("TODOS", "SIN_UNIDAD", "RESIDENTES", "INACTIVOS");
+
+	/** Número de intentos fallidos de inicio de sesión seguidos antes de bloquear el acceso. */
+	public static final int MAX_INTENTOS_LOGIN = 5;
+
+	/** Minutos que dura el bloqueo del inicio de sesión. */
+	public static final int MINUTOS_BLOQUEO_LOGIN = 15;
 
 	/** Repositorio para acceder a los datos de usuarios en la base de datos. */
 	@Autowired private UsuarioRepository usuarioRepo;
@@ -504,6 +511,63 @@ public class UsuarioService implements CRUDOperation<UsuarioDTO> {
 			}
 		}
 		return 1;
+	}
+
+	/**
+	 * Indica si el inicio de sesión de un usuario está bloqueado por demasiados intentos fallidos.
+	 *
+	 * @param username Correo del usuario
+	 * @return true si el bloqueo sigue vigente
+	 */
+	public boolean loginBloqueado(String username) {
+		Optional<Usuario> found = usuarioRepo.findByUsername(username);
+		if (!found.isPresent() || found.get().getBloqueadoHasta() == null) {
+			return false;
+		}
+		return found.get().getBloqueadoHasta().isAfter(LocalDateTime.now());
+	}
+
+	/**
+	 * Suma un intento fallido de inicio de sesión. Al llegar al máximo, bloquea el inicio de sesión
+	 * durante unos minutos y vuelve a empezar el conteo.
+	 *
+	 * @param username Correo con el que se intentó iniciar sesión
+	 * @return 0 si se sumó el intento, 1 si el inicio de sesión quedó bloqueado, 2 si el usuario no
+	 *     existe
+	 */
+	public int registrarIntentoFallido(String username) {
+		Optional<Usuario> found = usuarioRepo.findByUsername(username);
+		if (!found.isPresent()) {
+			return 2;
+		}
+		Usuario temp = found.get();
+		temp.setIntentosFallidos(temp.getIntentosFallidos() + 1);
+		if (temp.getIntentosFallidos() >= MAX_INTENTOS_LOGIN) {
+			temp.setIntentosFallidos(0);
+			temp.setBloqueadoHasta(LocalDateTime.now().plusMinutes(MINUTOS_BLOQUEO_LOGIN));
+			usuarioRepo.save(temp);
+			return 1;
+		}
+		usuarioRepo.save(temp);
+		return 0;
+	}
+
+	/**
+	 * Borra los intentos fallidos y el bloqueo de un usuario después de un inicio de sesión exitoso.
+	 *
+	 * @param username Correo del usuario
+	 * @return 0 si se reiniciaron los intentos, 1 si el usuario no existe
+	 */
+	public int reiniciarIntentos(String username) {
+		Optional<Usuario> found = usuarioRepo.findByUsername(username);
+		if (!found.isPresent()) {
+			return 1;
+		}
+		Usuario temp = found.get();
+		temp.setIntentosFallidos(0);
+		temp.setBloqueadoHasta(null);
+		usuarioRepo.save(temp);
+		return 0;
 	}
 
 	/**

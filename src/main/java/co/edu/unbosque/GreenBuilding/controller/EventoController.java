@@ -5,6 +5,7 @@ import co.edu.unbosque.GreenBuilding.dto.EventoDTO;
 import co.edu.unbosque.GreenBuilding.exception.DateNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
@@ -426,7 +427,8 @@ public class EventoController {
 		try {
 			ExceptionChecker.checkEmpty("motivo", data.getMotivo());
 			ExceptionChecker.checkCharacters(data.getMotivo());
-		} catch (EmptyFieldException | InvalidCharactersException e) {
+			ExceptionChecker.checkLength("motivo", data.getMotivo(), ExceptionChecker.MAX_MOTIVO);
+		} catch (EmptyFieldException | InvalidCharactersException | LengthNotValidException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		int status = eventoServ.cancelar(id, data.getMotivo());
@@ -644,6 +646,9 @@ public class EventoController {
 			ExceptionChecker.checkEmpty("título", data.getTitulo());
 			ExceptionChecker.checkCharacters(data.getTitulo());
 			ExceptionChecker.checkCharacters(data.getDescripcion());
+			ExceptionChecker.checkLength("título", data.getTitulo(), ExceptionChecker.MAX_TEXTO);
+			ExceptionChecker.checkLength(
+					"descripción", data.getDescripcion(), ExceptionChecker.MAX_DESCRIPCION);
 			ExceptionChecker.checkDate(data.getFecha());
 			ExceptionChecker.checkTimeRange(data.getHoraInicio(), data.getHoraFin());
 			ExceptionChecker.checkSelected("Elige el conjunto.", data.getConjuntoId());
@@ -654,6 +659,7 @@ public class EventoController {
 			ExceptionChecker.checkOptionalPositive("cupo", data.getCupoMaximo());
 		} catch (EmptyFieldException
 				| InvalidCharactersException
+				| LengthNotValidException
 				| DateNotValidException
 				| TimeNotValidException
 				| OptionNotValidException

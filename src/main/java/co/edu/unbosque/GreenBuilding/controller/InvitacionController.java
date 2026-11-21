@@ -41,7 +41,7 @@ import org.springframework.web.bind.annotation.RestController;
  */
 @RestController
 @RequestMapping("/invitacion")
-@CrossOrigin(origins = {"http://localhost:4200", "http://localhost:8080"})
+@CrossOrigin(origins = { "https://greenbuildingmanager.netlify.app/" })
 @Transactional
 @Tag(name = "Invitaciones", description = "Enlaces públicos e invitaciones por correo a eventos y reservas")
 @SecurityRequirement(name = "bearerAuth")

@@ -11,7 +11,7 @@
 	</parent>
 	<groupId>co.edu.unbosque</groupId>
 	<artifactId>GreenBuilding</artifactId>
-	<version>1.0</version>
+	<version>1.3</version>
 	<packaging>war</packaging>
 	<name>GreenBuilding</name>
 	<description>Back de Green Building Manager</description>

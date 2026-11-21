@@ -5,6 +5,7 @@ import co.edu.unbosque.GreenBuilding.dto.ReservaDTO;
 import co.edu.unbosque.GreenBuilding.exception.DateNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
@@ -136,12 +137,14 @@ public class ReservaController {
 			ExceptionChecker.checkTimeRange(newReserva.getHoraInicio(), newReserva.getHoraFin());
 			ExceptionChecker.checkEmpty("motivo", newReserva.getMotivo());
 			ExceptionChecker.checkCharacters(newReserva.getMotivo());
+			ExceptionChecker.checkLength("motivo", newReserva.getMotivo(), ExceptionChecker.MAX_MOTIVO);
 			ExceptionChecker.checkPositive("asistentes", newReserva.getAsistentes());
 			ExceptionChecker.checkSelected("Elige el espacio.", newReserva.getEspacioId());
 		} catch (DateNotValidException
 				| TimeNotValidException
 				| EmptyFieldException
 				| InvalidCharactersException
+				| LengthNotValidException
 				| NumberNotValidException
 				| OptionNotValidException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
@@ -547,7 +550,9 @@ public class ReservaController {
 		try {
 			ExceptionChecker.checkEmpty("observación", data.getObservacion());
 			ExceptionChecker.checkCharacters(data.getObservacion());
-		} catch (EmptyFieldException | InvalidCharactersException e) {
+			ExceptionChecker.checkLength(
+					"observación", data.getObservacion(), ExceptionChecker.MAX_MOTIVO);
+		} catch (EmptyFieldException | InvalidCharactersException | LengthNotValidException e) {
 			return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
 		}
 		int status = reservaServ.rechazar(id, data.getObservacion());

@@ -121,6 +121,16 @@ public class Usuario implements UserDetails {
 	private LocalDateTime fechaRegistro;
 
 	/**
+	 * Número de intentos fallidos de inicio de sesión seguidos.
+	 */
+	private int intentosFallidos;
+
+	/**
+	 * Fecha y hora hasta la que el inicio de sesión está bloqueado por demasiados intentos fallidos.
+	 */
+	private LocalDateTime bloqueadoHasta;
+
+	/**
 	 * Constructor por defecto.
 	 * Inicializa un usuario con valores predeterminados:
 	 * - Cuenta activa y sin verificar
@@ -532,6 +542,42 @@ public class Usuario implements UserDetails {
 	 */
 	public void setFechaRegistro(LocalDateTime fechaRegistro) {
 		this.fechaRegistro = fechaRegistro;
+	}
+
+	/**
+	 * Obtiene el número de intentos fallidos de inicio de sesión seguidos.
+	 *
+	 * @return Los intentos fallidos
+	 */
+	public int getIntentosFallidos() {
+		return intentosFallidos;
+	}
+
+	/**
+	 * Establece el número de intentos fallidos de inicio de sesión seguidos.
+	 *
+	 * @param intentosFallidos Los intentos fallidos
+	 */
+	public void setIntentosFallidos(int intentosFallidos) {
+		this.intentosFallidos = intentosFallidos;
+	}
+
+	/**
+	 * Obtiene la fecha y hora hasta la que el inicio de sesión está bloqueado.
+	 *
+	 * @return La fecha del fin del bloqueo, o null si no está bloqueado
+	 */
+	public LocalDateTime getBloqueadoHasta() {
+		return bloqueadoHasta;
+	}
+
+	/**
+	 * Establece la fecha y hora hasta la que el inicio de sesión está bloqueado.
+	 *
+	 * @param bloqueadoHasta La fecha del fin del bloqueo, o null para quitarlo
+	 */
+	public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
+		this.bloqueadoHasta = bloqueadoHasta;
 	}
 
 	/**

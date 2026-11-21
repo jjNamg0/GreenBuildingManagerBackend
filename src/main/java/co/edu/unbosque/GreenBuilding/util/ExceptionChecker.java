@@ -5,10 +5,13 @@ import co.edu.unbosque.GreenBuilding.exception.DateNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmailNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.EmptyFieldException;
 import co.edu.unbosque.GreenBuilding.exception.InvalidCharactersException;
+import co.edu.unbosque.GreenBuilding.exception.LengthNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.NumberNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.OptionNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.PasswordNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.PhoneNotValidException;
 import co.edu.unbosque.GreenBuilding.exception.TimeNotValidException;
+import co.edu.unbosque.GreenBuilding.exception.UrlNotValidException;
 import java.util.List;
 
 /**
@@ -24,9 +27,40 @@ public class ExceptionChecker {
 	private static final String PATRON_PASSWORD =
 			"^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[^a-zA-Z\\d\\s]).{8,}$";
 
-	/** Patrón de un correo electrónico. */
+	/** Patrón de un correo electrónico de máximo 255 caracteres. */
 	private static final String PATRON_CORREO =
-			"^[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$";
+			"^(?=.{1,255}$)[\\w.+-]+@[\\w-]+(\\.[\\w-]+)+$";
+
+	/** Dominios de correo aceptados: los proveedores más conocidos y el de la universidad. */
+	public static final List<String> DOMINIOS_PERMITIDOS =
+			List.of(
+					"gmail.com", "hotmail.com", "hotmail.es", "outlook.com", "outlook.es", "live.com",
+					"msn.com", "yahoo.com", "yahoo.es", "icloud.com", "me.com", "aol.com",
+					"protonmail.com", "proton.me", "unbosque.edu.co");
+
+	/** Mensaje cuando el correo es de un dominio que no está en la lista de permitidos. */
+	public static final String MENSAJE_DOMINIO =
+			"Usa un correo de un proveedor conocido, como Gmail, Hotmail, Outlook, Yahoo o iCloud.";
+
+	/** Patrón de un teléfono de 10 dígitos, como los celulares y fijos de Colombia. */
+	private static final String PATRON_TELEFONO =
+			"^\\d{10}$";
+
+	/** Patrón de una URL que empieza por http:// o https:// y no tiene espacios. */
+	private static final String PATRON_URL =
+			"^https?://\\S+$";
+
+	/** Número máximo de caracteres de un texto corto, como un nombre o una dirección. */
+	public static final int MAX_TEXTO = 255;
+
+	/** Número máximo de caracteres de un motivo o una observación. */
+	public static final int MAX_MOTIVO = 500;
+
+	/** Número máximo de caracteres de la URL de una imagen. */
+	public static final int MAX_URL = 1000;
+
+	/** Número máximo de caracteres de una descripción. */
+	public static final int MAX_DESCRIPCION = 2000;
 
 	/** Patrón de una hora con formato HH:mm. */
 	private static final String PATRON_HORA =
@@ -63,6 +97,60 @@ public class ExceptionChecker {
 	public static void checkEmail(String correo) throws EmailNotValidException {
 		if (correo == null || !correo.trim().matches(PATRON_CORREO)) {
 			throw new EmailNotValidException();
+		}
+		if (!dominioPermitido(correo)) {
+			throw new EmailNotValidException(MENSAJE_DOMINIO);
+		}
+	}
+
+	/**
+	 * Indica si el dominio del correo (lo que va después del @) está en la lista de permitidos.
+	 *
+	 * @param correo Correo con formato válido
+	 * @return true si el dominio es uno de los permitidos
+	 */
+	public static boolean dominioPermitido(String correo) {
+		String limpio = correo.trim().toLowerCase();
+		String dominio = limpio.substring(limpio.indexOf('@') + 1);
+		return DOMINIOS_PERMITIDOS.contains(dominio);
+	}
+
+	/**
+	 * Revisa que el teléfono tenga 10 dígitos.
+	 *
+	 * @param telefono Teléfono a revisar
+	 * @throws PhoneNotValidException si el teléfono no tiene 10 dígitos
+	 */
+	public static void checkPhone(String telefono) throws PhoneNotValidException {
+		if (telefono == null || !telefono.trim().matches(PATRON_TELEFONO)) {
+			throw new PhoneNotValidException();
+		}
+	}
+
+	/**
+	 * Revisa que un texto no pase del número máximo de caracteres.
+	 *
+	 * @param campo Nombre del campo, para el mensaje de error
+	 * @param valor Texto a revisar, puede ser nulo
+	 * @param maximo Número máximo de caracteres
+	 * @throws LengthNotValidException si el texto tiene más caracteres de los permitidos
+	 */
+	public static void checkLength(String campo, String valor, int maximo)
+			throws LengthNotValidException {
+		if (valor != null && valor.trim().length() > maximo) {
+			throw new LengthNotValidException(campo, maximo);
+		}
+	}
+
+	/**
+	 * Revisa que la URL de una imagen, cuando viene, empiece por http:// o https://.
+	 *
+	 * @param url URL a revisar, puede ser nula o vacía
+	 * @throws UrlNotValidException si la URL viene y no es válida
+	 */
+	public static void checkUrl(String url) throws UrlNotValidException {
+		if (url != null && !url.trim().isEmpty() && !url.trim().matches(PATRON_URL)) {
+			throw new UrlNotValidException();
 		}
 	}
 
@@ -183,17 +271,19 @@ public class ExceptionChecker {
 	}
 
 	/**
-	 * Revisa que se haya marcado una ubicación.
+	 * Revisa que se haya marcado una ubicación y que esté dentro de los rangos del planeta.
 	 *
 	 * @param latitud Latitud de la ubicación
 	 * @param longitud Longitud de la ubicación
-	 * @throws CoordinateNotValidException si falta la latitud o la longitud
+	 * @throws CoordinateNotValidException si falta la latitud o la longitud, o si están fuera de
+	 *     rango
 	 */
 	public static void checkLocation(Double latitud, Double longitud)
 			throws CoordinateNotValidException {
 		if (latitud == null || longitud == null) {
 			throw new CoordinateNotValidException("Marca la ubicación en el mapa.");
 		}
+		checkCoordinates(latitud, longitud);
 	}
 
 	/**
@@ -227,7 +317,7 @@ public class ExceptionChecker {
 		}
 		String invalidos = "";
 		for (String correo : correos) {
-			if (correo == null || !correo.trim().matches(PATRON_CORREO)) {
+			if (correo == null || !correo.trim().matches(PATRON_CORREO) || !dominioPermitido(correo)) {
 				if (!invalidos.isEmpty()) {
 					invalidos = invalidos + ", ";
 				}
