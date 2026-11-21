@@ -369,6 +369,16 @@ public class ReservaDTO {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		ReservaDTO other = (ReservaDTO) obj;
+		return mismosDatosPrincipales(other) && mismosDatosAdicionales(other);
+	}
+
+	/**
+	 * Compara la primera mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosPrincipales(ReservaDTO other) {
 		return Objects.equals(id, other.id)
 				&& Objects.equals(espacioId, other.espacioId)
 				&& Objects.equals(espacioNombre, other.espacioNombre)
@@ -376,8 +386,17 @@ public class ReservaDTO {
 				&& Objects.equals(usuarioId, other.usuarioId)
 				&& Objects.equals(usuarioNombre, other.usuarioNombre)
 				&& Objects.equals(unidadDescripcion, other.unidadDescripcion)
-				&& Objects.equals(fecha, other.fecha)
-				&& Objects.equals(horaInicio, other.horaInicio)
+				&& Objects.equals(fecha, other.fecha);
+	}
+
+	/**
+	 * Compara la segunda mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosAdicionales(ReservaDTO other) {
+		return Objects.equals(horaInicio, other.horaInicio)
 				&& Objects.equals(horaFin, other.horaFin)
 				&& Objects.equals(motivo, other.motivo)
 				&& Objects.equals(asistentes, other.asistentes)

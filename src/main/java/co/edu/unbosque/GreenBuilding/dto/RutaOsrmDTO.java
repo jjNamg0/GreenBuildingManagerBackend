@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -35,7 +36,11 @@ public class RutaOsrmDTO {
 		this.distance = distance;
 		this.duration = duration;
 		this.geometry = geometry;
-		this.legs = legs;
+		if (legs == null) {
+			this.legs = null;
+		} else {
+			this.legs = new ArrayList<>(legs);
+		}
 	}
 
 	/**
@@ -107,7 +112,11 @@ public class RutaOsrmDTO {
 	 * @param legs Tramos de la ruta
 	 */
 	public void setLegs(List<TramoOsrmDTO> legs) {
-		this.legs = legs;
+		if (legs == null) {
+			this.legs = null;
+		} else {
+			this.legs = new ArrayList<>(legs);
+		}
 	}
 
 	/**
@@ -134,8 +143,8 @@ public class RutaOsrmDTO {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		RutaOsrmDTO other = (RutaOsrmDTO) obj;
-		return distance == other.distance
-				&& duration == other.duration
+		return Double.doubleToLongBits(distance) == Double.doubleToLongBits(other.distance)
+				&& Double.doubleToLongBits(duration) == Double.doubleToLongBits(other.duration)
 				&& Objects.equals(geometry, other.geometry)
 				&& Objects.equals(legs, other.legs);
 	}

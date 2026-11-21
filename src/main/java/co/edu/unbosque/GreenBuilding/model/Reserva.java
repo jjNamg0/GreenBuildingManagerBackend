@@ -1,4 +1,3 @@
-
 package co.edu.unbosque.GreenBuilding.model;
 
 import java.time.LocalDate;
@@ -27,9 +26,7 @@ public class Reserva {
 	/**
 	 * Identificador único de la reserva.
 	 */
-	@Id
-	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private Long id;
+	private @Id @GeneratedValue(strategy = GenerationType.IDENTITY) Long id;
 
 	/**
 	 * Identificador del espacio reservado.
@@ -87,9 +84,9 @@ public class Reserva {
 	private LocalDateTime fechaCreacion;
 
 	/**
-	 * Código único de invitación para acceder al enlace público de la reserva.
+	 * Código del enlace público de la invitación.
 	 */
-	@Column(unique = true)
+	@Column(unique = true, length = 40)
 	private String codigoInvitacion;
 
 	/**
@@ -106,13 +103,10 @@ public class Reserva {
 	public enum Estado {
 		/** Esperando revisión del administrador */
 		PENDIENTE,
-
 		/** Aprobada por el administrador */
 		APROBADA,
-
 		/** Rechazada por el administrador */
 		RECHAZADA,
-
 		/** Cancelada por el residente */
 		CANCELADA
 	}
@@ -130,7 +124,7 @@ public class Reserva {
 	 * Indica si la reserva se cruza con un rango de horas del mismo día.
 	 *
 	 * @param inicio Hora de inicio del rango
-	 * @param fin    Hora de fin del rango
+	 * @param fin Hora de fin del rango
 	 * @return true si hay cruce
 	 */
 	public boolean seCruzaCon(LocalTime inicio, LocalTime fin) {
@@ -345,18 +339,18 @@ public class Reserva {
 	}
 
 	/**
-	 * Obtiene el código de invitación de la reserva.
+	 * Obtiene el código del enlace público de la invitación.
 	 *
-	 * @return El código de invitación
+	 * @return El código, o null si aún no tiene
 	 */
 	public String getCodigoInvitacion() {
 		return codigoInvitacion;
 	}
 
 	/**
-	 * Establece el código de invitación de la reserva.
+	 * Establece el código del enlace público de la invitación.
 	 *
-	 * @param codigoInvitacion El nuevo código de invitación
+	 * @param codigoInvitacion El nuevo código
 	 */
 	public void setCodigoInvitacion(String codigoInvitacion) {
 		this.codigoInvitacion = codigoInvitacion;
@@ -386,9 +380,7 @@ public class Reserva {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-
 		Reserva other = (Reserva) obj;
-
 		return Objects.equals(id, other.id) && Objects.equals(fecha, other.fecha)
 				&& Objects.equals(horaInicio, other.horaInicio) && Objects.equals(horaFin, other.horaFin);
 	}
@@ -403,4 +395,5 @@ public class Reserva {
 		return "Reserva [id=" + id + ", fecha=" + fecha + ", horaInicio=" + horaInicio + ", horaFin=" + horaFin
 				+ ", estado=" + estado + "]";
 	}
+
 }

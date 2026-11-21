@@ -43,6 +43,6 @@ public class DistanciaUtil {
 	 * @return Número redondeado
 	 */
 	public static double redondear(double valor) {
-		return Math.round(valor * 10.0) / 10.0;
+		return (long) (valor * 10.0 + 0.5) / 10.0;
 	}
 }

@@ -13,7 +13,6 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +23,9 @@ import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
 /**
- * Servicio que registra y consulta la auditoría del sistema. Cada registro
- * guarda quién hizo la acción, cuándo, qué hizo, desde qué IP y, si el
- * navegador la envió en las cabeceras X-Latitud y X-Longitud, desde qué
- * ubicación.
+ * Servicio que registra y consulta la auditoría del sistema. Cada registro guarda quién hizo la
+ * acción, cuándo, qué hizo, desde qué IP y, si el navegador la envió en las cabeceras X-Latitud y
+ * X-Longitud, desde qué ubicación.
  */
 @Service
 public class AuditoriaService {
@@ -36,31 +34,30 @@ public class AuditoriaService {
 	private static final int TAMANO_MAXIMO = 100;
 
 	/** Repositorio para acceder a los registros de auditoría. */
-	@Autowired
-	private RegistroAuditoriaRepository registroRepo;
+	@Autowired private RegistroAuditoriaRepository registroRepo;
 
 	/** Repositorio para acceder a los datos de usuarios. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Mapeador para convertir entre entidades y DTOs. */
-	@Autowired
-	private ModelMapper modelMapper;
+	@Autowired private ModelMapper modelMapper;
 
 	/** Constructor por defecto. */
-	public AuditoriaService() {
-	}
+	public AuditoriaService() {}
 
 	/**
 	 * Registra una acción hecha por el usuario que tiene la sesión iniciada.
 	 *
-	 * @param accion  Acción realizada
+	 * @param accion Acción realizada
 	 * @param entidad Entidad afectada
-	 * @param motivo  Descripción de la acción
+	 * @param motivo Descripción de la acción
 	 */
 	public void registrar(String accion, String entidad, String motivo) {
 		Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-		String username = authentication == null ? null : authentication.getName();
+		String username = null;
+		if (authentication != null) {
+			username = authentication.getName();
+		}
 		registrar(username, accion, entidad, motivo);
 	}
 
@@ -68,19 +65,33 @@ public class AuditoriaService {
 	 * Registra una acción hecha por un usuario específico.
 	 *
 	 * @param username Correo del usuario, o null si es un visitante
-	 * @param accion   Acción realizada
-	 * @param entidad  Entidad afectada
-	 * @param motivo   Descripción de la acción
+	 * @param accion Acción realizada
+	 * @param entidad Entidad afectada
+	 * @param motivo Descripción de la acción
 	 */
 	public void registrar(String username, String accion, String entidad, String motivo) {
-		Optional<Usuario> found = username == null ? Optional.empty() : usuarioRepo.findByUsername(username);
+		Usuario usuario = null;
+		if (username != null) {
+			Optional<Usuario> found = usuarioRepo.findByUsername(username);
+			if (found.isPresent()) {
+				usuario = found.get();
+			}
+		}
 		RegistroAuditoria registro;
-		if (found.isPresent()) {
-			Usuario usuario = found.get();
-			registro = new RegistroAuditoria(usuario.getUsername(), usuario.getNombreCompleto(),
-					usuario.getRole().name(), accion, entidad, motivo);
+		if (usuario != null) {
+			registro =
+					new RegistroAuditoria(
+							usuario.getUsername(),
+							usuario.getNombreCompleto(),
+							usuario.getRole().name(),
+							accion,
+							entidad,
+							motivo);
 		} else {
-			String nombre = username == null ? "anónimo" : username;
+			String nombre = "anónimo";
+			if (username != null) {
+				nombre = username;
+			}
 			registro = new RegistroAuditoria(nombre, "Desconocido", "PUBLICO", accion, entidad, motivo);
 		}
 		agregarOrigen(registro);
@@ -88,25 +99,46 @@ public class AuditoriaService {
 	}
 
 	/**
-	 * Consulta la auditoría con filtros y paginación, del registro más reciente al
-	 * más antiguo.
+	 * Consulta la auditoría con filtros y paginación, del registro más reciente al más antiguo.
 	 *
 	 * @param usuario Texto a buscar en el correo o nombre del usuario (opcional)
-	 * @param accion  Acción exacta a filtrar (opcional)
-	 * @param role    Tipo de usuario exacto: ADMIN, USER o PUBLICO (opcional)
-	 * @param motivo  Texto que debe contener el motivo (opcional)
-	 * @param desde   Fecha inicial AAAA-MM-DD (opcional)
-	 * @param hasta   Fecha final AAAA-MM-DD (opcional)
-	 * @param pagina  Número de página, desde 0
-	 * @param tamano  Tamaño de la página
+	 * @param accion Acción exacta a filtrar (opcional)
+	 * @param role Tipo de usuario exacto: ADMIN, USER o PUBLICO (opcional)
+	 * @param motivo Texto que debe contener el motivo (opcional)
+	 * @param desde Fecha inicial AAAA-MM-DD (opcional)
+	 * @param hasta Fecha final AAAA-MM-DD (opcional)
+	 * @param pagina Número de página, desde 0
+	 * @param tamano Tamaño de la página
 	 * @return Página de registros de auditoría
 	 */
-	public PaginaAuditoriaDTO getAll(String usuario, String accion, String role, String motivo, String desde,
-			String hasta, int pagina, int tamano) {
-		LocalDate fechaDesde = TextoUtil.vacio(desde) ? null : FechaUtil.leerFecha(desde);
-		LocalDate fechaHasta = TextoUtil.vacio(hasta) ? null : FechaUtil.leerFecha(hasta);
-		int tamanoSeguro = Math.max(1, Math.min(tamano, TAMANO_MAXIMO));
-		int paginaSegura = Math.max(pagina, 0);
+	public PaginaAuditoriaDTO getAll(
+			String usuario,
+			String accion,
+			String role,
+			String motivo,
+			String desde,
+			String hasta,
+			int pagina,
+			int tamano) {
+		LocalDate fechaDesde = null;
+		if (!TextoUtil.vacio(desde)) {
+			fechaDesde = FechaUtil.leerFecha(desde);
+		}
+		LocalDate fechaHasta = null;
+		if (!TextoUtil.vacio(hasta)) {
+			fechaHasta = FechaUtil.leerFecha(hasta);
+		}
+		int tamanoSeguro = tamano;
+		if (tamanoSeguro > TAMANO_MAXIMO) {
+			tamanoSeguro = TAMANO_MAXIMO;
+		}
+		if (tamanoSeguro < 1) {
+			tamanoSeguro = 1;
+		}
+		int paginaSegura = pagina;
+		if (paginaSegura < 0) {
+			paginaSegura = 0;
+		}
 		List<RegistroAuditoria> filtrados = new ArrayList<>();
 		for (RegistroAuditoria registro : registroRepo.findAllByOrderByFechaDescIdDesc()) {
 			if (cumpleFiltro(registro, usuario, accion, role, motivo, fechaDesde, fechaHasta)) {
@@ -114,11 +146,18 @@ public class AuditoriaService {
 			}
 		}
 		int total = filtrados.size();
-		int inicio = (int) Math.min((long) paginaSegura * tamanoSeguro, total);
-		int fin = Math.min(inicio + tamanoSeguro, total);
+		long desdeRegistro = (long) paginaSegura * tamanoSeguro;
+		int inicio = total;
+		if (desdeRegistro < total) {
+			inicio = (int) desdeRegistro;
+		}
+		int fin = total;
+		if (inicio + tamanoSeguro < total) {
+			fin = inicio + tamanoSeguro;
+		}
 		List<RegistroAuditoriaDTO> contenido = new ArrayList<>();
-		for (RegistroAuditoria registro : filtrados.subList(inicio, fin)) {
-			contenido.add(aDTO(registro));
+		for (int i = inicio; i < fin; i++) {
+			contenido.add(aDTO(filtrados.get(i)));
 		}
 		int totalPaginas = (total + tamanoSeguro - 1) / tamanoSeguro;
 		return new PaginaAuditoriaDTO(contenido, total, totalPaginas, paginaSegura, tamanoSeguro);
@@ -137,41 +176,84 @@ public class AuditoriaService {
 	 * Indica si un registro cumple todos los filtros de la consulta de auditoría.
 	 *
 	 * @param registro Registro a revisar
-	 * @param usuario  Texto a buscar en el correo o nombre del usuario
-	 * @param accion   Acción a filtrar
-	 * @param role     Tipo de usuario a filtrar
-	 * @param motivo   Texto que debe contener el motivo
-	 * @param desde    Fecha inicial
-	 * @param hasta    Fecha final
+	 * @param usuario Texto a buscar en el correo o nombre del usuario
+	 * @param accion Acción a filtrar
+	 * @param role Tipo de usuario a filtrar
+	 * @param motivo Texto que debe contener el motivo
+	 * @param desde Fecha inicial
+	 * @param hasta Fecha final
 	 * @return true si cumple los filtros que se indicaron
 	 */
-	private boolean cumpleFiltro(RegistroAuditoria registro, String usuario, String accion, String role, String motivo,
-			LocalDate desde, LocalDate hasta) {
-		if (!TextoUtil.vacio(usuario)) {
-			String buscado = usuario.trim().toLowerCase();
-			boolean porCorreo = registro.getUsername() != null
-					&& registro.getUsername().toLowerCase().contains(buscado);
-			boolean porNombre = registro.getNombreUsuario() != null
-					&& registro.getNombreUsuario().toLowerCase().contains(buscado);
-			if (!porCorreo && !porNombre) {
-				return false;
-			}
+	private boolean cumpleFiltro(
+			RegistroAuditoria registro,
+			String usuario,
+			String accion,
+			String role,
+			String motivo,
+			LocalDate desde,
+			LocalDate hasta) {
+		return coincideUsuario(registro, usuario)
+				&& coincideExacto(registro.getAccion(), accion)
+				&& coincideExacto(registro.getRole(), role)
+				&& contieneTexto(registro.getMotivo(), motivo)
+				&& dentroDeFechas(registro, desde, hasta);
+	}
+
+	/**
+	 * Indica si el correo o el nombre del usuario del registro contienen el texto buscado.
+	 *
+	 * @param registro Registro a revisar
+	 * @param usuario Texto a buscar en el correo o nombre del usuario
+	 * @return true si no hay texto para buscar o si el correo o el nombre lo contienen
+	 */
+	private boolean coincideUsuario(RegistroAuditoria registro, String usuario) {
+		if (TextoUtil.vacio(usuario)) {
+			return true;
 		}
-		if (!TextoUtil.vacio(accion) && !accion.trim().toUpperCase().equals(registro.getAccion())) {
-			return false;
+		return contieneTexto(registro.getUsername(), usuario) || contieneTexto(registro.getNombreUsuario(), usuario);
+	}
+
+	/**
+	 * Indica si un valor es igual al filtro, sin importar mayúsculas ni espacios del filtro.
+	 *
+	 * @param valor Valor guardado en el registro
+	 * @param filtro Valor a filtrar
+	 * @return true si no hay filtro o si el valor es igual al filtro
+	 */
+	private boolean coincideExacto(String valor, String filtro) {
+		if (TextoUtil.vacio(filtro)) {
+			return true;
 		}
-		if (!TextoUtil.vacio(role) && !role.trim().toUpperCase().equals(registro.getRole())) {
-			return false;
+		return filtro.trim().toUpperCase().equals(valor);
+	}
+
+	/**
+	 * Indica si un valor contiene el texto del filtro, sin importar mayúsculas.
+	 *
+	 * @param valor Valor guardado en el registro
+	 * @param filtro Texto a buscar
+	 * @return true si no hay filtro o si el valor contiene el texto
+	 */
+	private boolean contieneTexto(String valor, String filtro) {
+		if (TextoUtil.vacio(filtro)) {
+			return true;
 		}
-		if (!TextoUtil.vacio(motivo) && (registro.getMotivo() == null
-				|| !registro.getMotivo().toLowerCase().contains(motivo.trim().toLowerCase()))) {
-			return false;
-		}
+		return valor != null && valor.toLowerCase().contains(filtro.trim().toLowerCase());
+	}
+
+	/**
+	 * Indica si la fecha del registro está dentro del rango indicado.
+	 *
+	 * @param registro Registro a revisar
+	 * @param desde Fecha inicial
+	 * @param hasta Fecha final
+	 * @return true si la fecha está dentro del rango, o si no se indicó rango
+	 */
+	private boolean dentroDeFechas(RegistroAuditoria registro, LocalDate desde, LocalDate hasta) {
 		if (desde != null && (registro.getFecha() == null || registro.getFecha().isBefore(desde.atStartOfDay()))) {
 			return false;
 		}
-		if (hasta != null
-				&& (registro.getFecha() == null || registro.getFecha().isAfter(hasta.atTime(LocalTime.MAX)))) {
+		if (hasta != null && (registro.getFecha() == null || registro.getFecha().isAfter(hasta.atTime(LocalTime.MAX)))) {
 			return false;
 		}
 		return true;
@@ -189,7 +271,7 @@ public class AuditoriaService {
 		if (registro.getLatitud() == null || registro.getLongitud() == null) {
 			dto.setUbicacion("Sin ubicación");
 		} else {
-			dto.setUbicacion(String.format(Locale.ROOT, "%.5f, %.5f", registro.getLatitud(), registro.getLongitud()));
+			dto.setUbicacion(recortarCoordenada(registro.getLatitud()) + ", " + recortarCoordenada(registro.getLongitud()));
 		}
 		return dto;
 	}
@@ -203,18 +285,32 @@ public class AuditoriaService {
 		if (!(RequestContextHolder.getRequestAttributes() instanceof ServletRequestAttributes)) {
 			return;
 		}
-		HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.getRequestAttributes())
-				.getRequest();
+		HttpServletRequest request =
+				((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest();
 		registro.setLatitud(leerCoordenada(request.getHeader("X-Latitud"), 90));
 		registro.setLongitud(leerCoordenada(request.getHeader("X-Longitud"), 180));
 		String reenviada = request.getHeader("X-Forwarded-For");
-		registro.setIp(TextoUtil.vacio(reenviada) ? request.getRemoteAddr() : reenviada.split(",")[0].trim());
+		if (TextoUtil.vacio(reenviada)) {
+			registro.setIp(request.getRemoteAddr());
+		} else {
+			registro.setIp(TextoUtil.separarPorComas(reenviada).get(0).trim());
+		}
+	}
+
+	/**
+	 * Deja una coordenada con máximo cinco decimales para mostrarla.
+	 *
+	 * @param coordenada Coordenada a recortar
+	 * @return La coordenada con máximo cinco decimales
+	 */
+	private double recortarCoordenada(double coordenada) {
+		return (long) (coordenada * 100000) / 100000.0;
 	}
 
 	/**
 	 * Convierte el valor de una cabecera en coordenada.
 	 *
-	 * @param valor  Valor de la cabecera
+	 * @param valor Valor de la cabecera
 	 * @param limite Valor absoluto máximo permitido
 	 * @return La coordenada, o null si no es válida
 	 */
@@ -224,7 +320,10 @@ public class AuditoriaService {
 		}
 		try {
 			double numero = Double.parseDouble(valor.trim());
-			return Math.abs(numero) <= limite ? numero : null;
+			if (numero >= -limite && numero <= limite) {
+				return numero;
+			}
+			return null;
 		} catch (NumberFormatException e) {
 			return null;
 		}

@@ -107,12 +107,12 @@ public class UnidadService implements CRUDOperation<UnidadDTO> {
 	 * Obtiene las unidades de un conjunto.
 	 *
 	 * @param conjuntoId ID del conjunto
-	 * @return Lista de DTOs de unidades, o null si el conjunto no existe
+	 * @return Lista de DTOs de unidades, vacía si el conjunto no existe
 	 */
 	public List<UnidadDTO> getByConjunto(Long conjuntoId) {
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(conjuntoId);
 		if (!conjunto.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		List<UnidadDTO> dtoList = new ArrayList<>();
 		unidadRepo.findByConjuntoIdOrderByAgrupacionAscNumeroAsc(conjuntoId)

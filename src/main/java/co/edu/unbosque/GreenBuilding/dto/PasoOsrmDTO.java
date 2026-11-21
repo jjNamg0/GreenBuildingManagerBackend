@@ -135,8 +135,8 @@ public class PasoOsrmDTO {
 		PasoOsrmDTO other = (PasoOsrmDTO) obj;
 		return Objects.equals(maneuver, other.maneuver)
 				&& Objects.equals(name, other.name)
-				&& distance == other.distance
-				&& duration == other.duration;
+				&& Double.doubleToLongBits(distance) == Double.doubleToLongBits(other.distance)
+				&& Double.doubleToLongBits(duration) == Double.doubleToLongBits(other.duration);
 	}
 
 	/**

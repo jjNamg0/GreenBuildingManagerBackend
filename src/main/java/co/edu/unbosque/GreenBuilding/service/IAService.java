@@ -13,15 +13,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio del chat de ayuda. Arma la conversación con una instrucción fija
- * sobre Green Building y se la envía al modelo de NVIDIA (API compatible con
- * OpenAI). La API key vive en el application.properties, que no se sube a git,
- * y se envía como Bearer. No guarda nada en la base de datos: el historial lo
- * manda el front en cada pregunta.
+ * Servicio del chat de ayuda. Arma la conversación con una instrucción fija sobre Green Building y
+ * se la envía al modelo de NVIDIA (API compatible con OpenAI). La API key vive en el
+ * application.properties, que no se sube a git, y se envía como Bearer. No guarda nada en la base
+ * de datos: el historial lo manda el front en cada pregunta.
  *
- * <p>
- * Códigos de validar: 0 = correcto, 1 = mensaje vacío, 2 = mensaje demasiado
- * largo, 3 = el usuario escribió muy rápido.
+ * <p>Códigos de validar: 0 = correcto, 1 = mensaje vacío, 2 = mensaje demasiado largo, 3 = el
+ * usuario escribió muy rápido.
  */
 @Service
 public class IAService {
@@ -32,11 +30,9 @@ public class IAService {
 	/** Rol de los mensajes escritos por el asistente. */
 	private static final String ROL_ASISTENTE = "assistant";
 
-	/**
-	 * Instrucción fija que define qué puede responder el asistente y cómo funciona
-	 * la aplicación.
-	 */
-	private static final String INSTRUCCION = """
+	/** Instrucción fija que define qué puede responder el asistente y cómo funciona la aplicación. */
+	private static final String INSTRUCCION =
+			"""
 			Eres el asistente de ayuda de Green Building Manager, una aplicación web para conjuntos \
 			residenciales de Cundinamarca. Responde siempre en español, con frases cortas (máximo 5) y \
 			un tono amable. Solo ayudas a usar la aplicación: si te preguntan otra cosa, di que solo \
@@ -85,27 +81,22 @@ public class IAService {
 	/** Usuarios que ya hicieron alguna pregunta. */
 	private final List<String> usuariosRecientes = new ArrayList<>();
 
-	/**
-	 * Momento de la última pregunta aceptada de cada usuario, en el mismo orden de
-	 * la lista anterior.
-	 */
+	/** Momento de la última pregunta aceptada de cada usuario, en el mismo orden de la lista anterior. */
 	private final List<Long> momentosRecientes = new ArrayList<>();
 
 	/** Constructor por defecto. */
-	public IAService() {
-	}
+	public IAService() {}
 
 	/**
 	 * Valida la pregunta y registra el momento en que la hizo el usuario.
 	 *
 	 * @param usuario Correo del usuario que pregunta
-	 * @param chat    Pregunta y conversación anterior
-	 * @return 0 si es correcta, 1 si está vacía, 2 si es demasiado larga, 3 si
-	 *         escribió muy rápido
+	 * @param chat Pregunta y conversación anterior
+	 * @return 0 si es correcta, 1 si está vacía, 2 si es demasiado larga, 3 si escribió muy rápido
 	 */
-	public synchronized int validar(String usuario, ChatDTO chat) {
+	public int validar(String usuario, ChatDTO chat) {
 		String mensaje = chat.getMensaje();
-		if (mensaje == null || mensaje.isBlank()) {
+		if (mensaje == null || mensaje.trim().isEmpty()) {
 			return 1;
 		}
 		if (mensaje.length() > maxCaracteres) {
@@ -132,13 +123,17 @@ public class IAService {
 	 * @return Respuesta del asistente, o null si no hay API key o el servicio falló
 	 */
 	public String responder(ChatDTO chat) {
-		if (apiKey == null || apiKey.isBlank()) {
+		if (apiKey == null || apiKey.trim().isEmpty()) {
 			return null;
 		}
 		try {
-			RespuestaIADTO respuesta = ExternalHTTPRequestHandler.doPostWithHeadersAndConvertToDto(url,
-					new Gson().toJson(armarPeticion(chat)), "Authorization", "Bearer " + apiKey.trim(),
-					RespuestaIADTO.class);
+			RespuestaIADTO respuesta =
+					ExternalHTTPRequestHandler.doPostWithHeadersAndConvertToDto(
+							url,
+							new Gson().toJson(armarPeticion(chat)),
+							"Authorization",
+							"Bearer " + apiKey.trim(),
+							RespuestaIADTO.class);
 			if (respuesta == null) {
 				return null;
 			}
@@ -150,8 +145,7 @@ public class IAService {
 	}
 
 	/**
-	 * Arma la petición que se envía al modelo: la instrucción, los últimos mensajes
-	 * y la pregunta.
+	 * Arma la petición que se envía al modelo: la instrucción, los últimos mensajes y la pregunta.
 	 *
 	 * @param chat Pregunta y conversación anterior
 	 * @return Petición para el modelo
@@ -161,8 +155,12 @@ public class IAService {
 		mensajes.add(new MensajeIADTO("system", INSTRUCCION));
 		List<MensajeChatDTO> historial = chat.getHistorial();
 		if (historial != null) {
-			int desde = Math.max(0, historial.size() - maxHistorial);
-			for (MensajeChatDTO anterior : historial.subList(desde, historial.size())) {
+			int desde = historial.size() - maxHistorial;
+			if (desde < 0) {
+				desde = 0;
+			}
+			for (int i = desde; i < historial.size(); i++) {
+				MensajeChatDTO anterior = historial.get(i);
 				if (esMensajeValido(anterior)) {
 					mensajes.add(new MensajeIADTO(anterior.getRol(), recortar(anterior.getContenido())));
 				}
@@ -173,16 +171,16 @@ public class IAService {
 	}
 
 	/**
-	 * Indica si un mensaje del historial se puede enviar al modelo. Solo se aceptan
-	 * los roles user y assistant, así el front no puede colar instrucciones de
-	 * sistema.
+	 * Indica si un mensaje del historial se puede enviar al modelo. Solo se aceptan los roles user y
+	 * assistant, así el front no puede colar instrucciones de sistema.
 	 *
 	 * @param anterior Mensaje del historial
 	 * @return true si el rol es user o assistant y tiene texto
 	 */
 	private boolean esMensajeValido(MensajeChatDTO anterior) {
-		boolean rolValido = ROL_USUARIO.equals(anterior.getRol()) || ROL_ASISTENTE.equals(anterior.getRol());
-		return rolValido && anterior.getContenido() != null && !anterior.getContenido().isBlank();
+		boolean rolValido =
+				ROL_USUARIO.equals(anterior.getRol()) || ROL_ASISTENTE.equals(anterior.getRol());
+		return rolValido && anterior.getContenido() != null && !anterior.getContenido().trim().isEmpty();
 	}
 
 	/**
@@ -192,12 +190,14 @@ public class IAService {
 	 * @return El texto, con máximo maxCaracteres caracteres
 	 */
 	private String recortar(String texto) {
-		return texto.length() > maxCaracteres ? texto.substring(0, maxCaracteres) : texto;
+		if (texto.length() > maxCaracteres) {
+			return texto.substring(0, maxCaracteres);
+		}
+		return texto;
 	}
 
 	/**
-	 * Extrae el texto de la respuesta del modelo y quita el bloque de razonamiento
-	 * si lo trae.
+	 * Extrae el texto de la respuesta del modelo y quita el bloque de razonamiento si lo trae.
 	 *
 	 * @param respuesta Respuesta del modelo
 	 * @return Texto de la respuesta, o null si venía vacío
@@ -211,7 +211,17 @@ public class IAService {
 		if (contenido == null) {
 			return null;
 		}
-		String limpio = contenido.replaceAll("(?s)<think>.*?</think>", "").trim();
-		return limpio.isEmpty() ? null : limpio;
+		String limpio = contenido;
+		for (int inicio = limpio.indexOf("<think>");
+				inicio >= 0 && limpio.indexOf("</think>", inicio) >= 0;
+				inicio = limpio.indexOf("<think>")) {
+			int fin = limpio.indexOf("</think>", inicio);
+			limpio = limpio.substring(0, inicio) + limpio.substring(fin + "</think>".length());
+		}
+		limpio = limpio.trim();
+		if (limpio.isEmpty()) {
+			return null;
+		}
+		return limpio;
 	}
 }

@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -21,7 +22,11 @@ public class RespuestaIADTO {
 	 * @param choices Respuestas del modelo; se usa la primera.
 	 */
 	public RespuestaIADTO(List<OpcionIADTO> choices) {
-		this.choices = choices;
+		if (choices == null) {
+			this.choices = null;
+		} else {
+			this.choices = new ArrayList<>(choices);
+		}
 	}
 
 	/**
@@ -39,7 +44,11 @@ public class RespuestaIADTO {
 	 * @param choices Respuestas del modelo; se usa la primera
 	 */
 	public void setChoices(List<OpcionIADTO> choices) {
-		this.choices = choices;
+		if (choices == null) {
+			this.choices = null;
+		} else {
+			this.choices = new ArrayList<>(choices);
+		}
 	}
 
 	/**

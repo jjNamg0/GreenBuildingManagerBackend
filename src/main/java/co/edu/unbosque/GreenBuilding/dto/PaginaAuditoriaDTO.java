@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -37,7 +38,11 @@ public class PaginaAuditoriaDTO {
 	 * @param size Tamaño de la página.
 	 */
 	public PaginaAuditoriaDTO(List<RegistroAuditoriaDTO> content, long totalElements, int totalPages, int number, int size) {
-		this.content = content;
+		if (content == null) {
+			this.content = null;
+		} else {
+			this.content = new ArrayList<>(content);
+		}
 		this.totalElements = totalElements;
 		this.totalPages = totalPages;
 		this.number = number;
@@ -59,7 +64,11 @@ public class PaginaAuditoriaDTO {
 	 * @param content Registros de la página
 	 */
 	public void setContent(List<RegistroAuditoriaDTO> content) {
-		this.content = content;
+		if (content == null) {
+			this.content = null;
+		} else {
+			this.content = new ArrayList<>(content);
+		}
 	}
 
 	/**

@@ -15,10 +15,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 /**
- * Filtro de autenticación JWT que se ejecuta una vez por cada solicitud HTTP.
- * Este filtro extrae el token JWT del encabezado de autorización, lo valida y
- * establece la autenticación en el contexto de seguridad de Spring si el token
- * es válido y la cuenta está verificada y activa.
+ * Filtro de autenticación JWT que se ejecuta una vez por cada solicitud HTTP. Este filtro extrae el
+ * token JWT del encabezado de autorización, lo valida y establece la autenticación en el contexto
+ * de seguridad de Spring si el token es válido y la cuenta está verificada y activa.
  */
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -32,7 +31,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	/**
 	 * Constructor que inicializa el filtro con las dependencias necesarias.
 	 *
-	 * @param jwtUtil            Utilidad para operaciones con tokens JWT
+	 * @param jwtUtil Utilidad para operaciones con tokens JWT
 	 * @param userDetailsService Servicio para cargar detalles de usuario
 	 */
 	public JwtAuthenticationFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
@@ -41,17 +40,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	}
 
 	/**
-	 * Método principal del filtro que procesa cada solicitud HTTP. Extrae y valida
-	 * el token JWT, y establece la autenticación si el token es válido.
+	 * Método principal del filtro que procesa cada solicitud HTTP. Extrae y valida el token JWT, y
+	 * establece la autenticación si el token es válido.
 	 *
-	 * @param request     Solicitud HTTP
-	 * @param response    Respuesta HTTP
+	 * @param request Solicitud HTTP
+	 * @param response Respuesta HTTP
 	 * @param filterChain Cadena de filtros
 	 * @throws ServletException Si ocurre un error en el servlet
-	 * @throws IOException      Si ocurre un error de entrada/salida
+	 * @throws IOException Si ocurre un error de entrada/salida
 	 */
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+	protected void doFilterInternal(
+			HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
 		final String authorizationHeader = request.getHeader("Authorization");
@@ -64,7 +64,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			try {
 				username = jwtUtil.extractUsername(jwt);
 			} catch (Exception e) {
-				logger.debug("Token rechazado: " + e.getMessage());
+				logger.error("Token rechazado: " + e.getMessage());
 			}
 		}
 
@@ -72,15 +72,18 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			try {
 				UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-				if (jwtUtil.validateToken(jwt, userDetails) && userDetails.isEnabled()
+				if (jwtUtil.validateToken(jwt, userDetails)
+						&& userDetails.isEnabled()
 						&& userDetails.isAccountNonLocked()) {
-					UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(
-							userDetails, null, userDetails.getAuthorities());
-					authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					UsernamePasswordAuthenticationToken authenticationToken =
+							new UsernamePasswordAuthenticationToken(
+									userDetails, null, userDetails.getAuthorities());
+					authenticationToken.setDetails(
+							new WebAuthenticationDetailsSource().buildDetails(request));
 					SecurityContextHolder.getContext().setAuthentication(authenticationToken);
 				}
 			} catch (UsernameNotFoundException e) {
-				logger.debug("El usuario del token ya no existe: " + username);
+				logger.error("El usuario del token ya no existe: " + username);
 			}
 		}
 

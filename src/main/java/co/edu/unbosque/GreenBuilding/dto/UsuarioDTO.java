@@ -1,6 +1,7 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
 import co.edu.unbosque.GreenBuilding.model.Usuario.Role;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -349,7 +350,11 @@ public class UsuarioDTO {
 	 * @param intereses Intereses del usuario para las recomendaciones
 	 */
 	public void setIntereses(List<String> intereses) {
-		this.intereses = intereses;
+		if (intereses == null) {
+			this.intereses = null;
+		} else {
+			this.intereses = new ArrayList<>(intereses);
+		}
 	}
 
 	/**
@@ -376,6 +381,16 @@ public class UsuarioDTO {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		UsuarioDTO other = (UsuarioDTO) obj;
+		return mismosDatosPrincipales(other) && mismosDatosAdicionales(other);
+	}
+
+	/**
+	 * Compara la primera mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosPrincipales(UsuarioDTO other) {
 		return Objects.equals(id, other.id)
 				&& Objects.equals(nombre, other.nombre)
 				&& Objects.equals(apellido, other.apellido)
@@ -383,8 +398,17 @@ public class UsuarioDTO {
 				&& Objects.equals(telefono, other.telefono)
 				&& Objects.equals(password, other.password)
 				&& role == other.role
-				&& verificado == other.verificado
-				&& activo == other.activo
+				&& verificado == other.verificado;
+	}
+
+	/**
+	 * Compara la segunda mitad de los atributos de este objeto con los de otro.
+	 *
+	 * @param other Objeto a comparar
+	 * @return true si esos atributos son iguales, false en caso contrario
+	 */
+	private boolean mismosDatosAdicionales(UsuarioDTO other) {
+		return activo == other.activo
 				&& Objects.equals(conjuntoId, other.conjuntoId)
 				&& Objects.equals(conjuntoNombre, other.conjuntoNombre)
 				&& Objects.equals(unidadId, other.unidadId)

@@ -1,5 +1,6 @@
 package co.edu.unbosque.GreenBuilding.dto;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -34,8 +35,16 @@ public class RutaDTO {
 	public RutaDTO(double distanciaMetros, double duracionSegundos, List<double[]> puntos, List<PasoRutaDTO> pasos) {
 		this.distanciaMetros = distanciaMetros;
 		this.duracionSegundos = duracionSegundos;
-		this.puntos = puntos;
-		this.pasos = pasos;
+		if (puntos == null) {
+			this.puntos = null;
+		} else {
+			this.puntos = new ArrayList<>(puntos);
+		}
+		if (pasos == null) {
+			this.pasos = null;
+		} else {
+			this.pasos = new ArrayList<>(pasos);
+		}
 	}
 
 	/**
@@ -89,7 +98,11 @@ public class RutaDTO {
 	 * @param puntos Puntos de la ruta en formato [latitud, longitud]
 	 */
 	public void setPuntos(List<double[]> puntos) {
-		this.puntos = puntos;
+		if (puntos == null) {
+			this.puntos = null;
+		} else {
+			this.puntos = new ArrayList<>(puntos);
+		}
 	}
 
 	/**
@@ -107,7 +120,11 @@ public class RutaDTO {
 	 * @param pasos Instrucciones paso a paso
 	 */
 	public void setPasos(List<PasoRutaDTO> pasos) {
-		this.pasos = pasos;
+		if (pasos == null) {
+			this.pasos = null;
+		} else {
+			this.pasos = new ArrayList<>(pasos);
+		}
 	}
 
 	/**
@@ -134,8 +151,8 @@ public class RutaDTO {
 		if (obj == null) return false;
 		if (getClass() != obj.getClass()) return false;
 		RutaDTO other = (RutaDTO) obj;
-		return distanciaMetros == other.distanciaMetros
-				&& duracionSegundos == other.duracionSegundos
+		return Double.doubleToLongBits(distanciaMetros) == Double.doubleToLongBits(other.distanciaMetros)
+				&& Double.doubleToLongBits(duracionSegundos) == Double.doubleToLongBits(other.duracionSegundos)
 				&& Objects.equals(puntos, other.puntos)
 				&& Objects.equals(pasos, other.pasos);
 	}

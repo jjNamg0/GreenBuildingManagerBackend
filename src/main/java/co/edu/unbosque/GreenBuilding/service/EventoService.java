@@ -7,16 +7,19 @@ import co.edu.unbosque.GreenBuilding.model.Espacio;
 import co.edu.unbosque.GreenBuilding.model.Evento;
 import co.edu.unbosque.GreenBuilding.model.Evento.Estado;
 import co.edu.unbosque.GreenBuilding.model.Evento.Tipo;
+import co.edu.unbosque.GreenBuilding.model.Reserva;
 import co.edu.unbosque.GreenBuilding.model.Usuario;
 import co.edu.unbosque.GreenBuilding.repository.AsistenciaRepository;
 import co.edu.unbosque.GreenBuilding.repository.ConjuntoRepository;
 import co.edu.unbosque.GreenBuilding.repository.EspacioRepository;
 import co.edu.unbosque.GreenBuilding.repository.EventoRepository;
+import co.edu.unbosque.GreenBuilding.repository.ReservaRepository;
 import co.edu.unbosque.GreenBuilding.repository.UsuarioRepository;
 import co.edu.unbosque.GreenBuilding.util.FechaUtil;
 import co.edu.unbosque.GreenBuilding.util.TextoUtil;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -25,52 +28,48 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 /**
- * Servicio que proporciona operaciones CRUD para los eventos de los conjuntos,
- * la asistencia de los residentes y las invitaciones por correo. Implementa la
- * interfaz CRUDOperation.
+ * Servicio que proporciona operaciones CRUD para los eventos de los conjuntos y la asistencia de
+ * los residentes. Las invitaciones las maneja InvitacionService. Implementa la interfaz
+ * CRUDOperation.
  */
 @Service
 public class EventoService implements CRUDOperation<EventoDTO> {
 
 	/** Repositorio para acceder a los eventos. */
-	@Autowired
-	private EventoRepository eventoRepo;
+	@Autowired private EventoRepository eventoRepo;
 
 	/** Repositorio para acceder a los conjuntos. */
-	@Autowired
-	private ConjuntoRepository conjuntoRepo;
+	@Autowired private ConjuntoRepository conjuntoRepo;
 
 	/** Repositorio para acceder a los espacios. */
-	@Autowired
-	private EspacioRepository espacioRepo;
+	@Autowired private EspacioRepository espacioRepo;
 
 	/** Repositorio para acceder a los usuarios. */
-	@Autowired
-	private UsuarioRepository usuarioRepo;
+	@Autowired private UsuarioRepository usuarioRepo;
 
 	/** Repositorio para acceder a las asistencias a eventos. */
-	@Autowired
-	private AsistenciaRepository asistenciaRepo;
+	@Autowired private AsistenciaRepository asistenciaRepo;
 
 	/** Mapeador para convertir entre entidades y DTOs. */
-	@Autowired
-	private ModelMapper modelMapper;
+	@Autowired private ModelMapper modelMapper;
 
 	/** Servicio de auditoría. */
-	@Autowired
-	private AuditoriaService auditoriaServ;
+	@Autowired private AuditoriaService auditoriaServ;
 
 	/** Servicio de correo. */
-	@Autowired
-	private CorreoService correoServ;
+	@Autowired private CorreoService correoServ;
 
 	/** Servicio que arma el HTML de los correos. */
-	@Autowired
-	private PlantillaCorreoService plantillaServ;
+	@Autowired private PlantillaCorreoService plantillaServ;
+
+	/** Repositorio para acceder a las reservas, para no cruzar un evento con una reserva. */
+	@Autowired private ReservaRepository reservaRepo;
+
+	/** Servicio de invitaciones: código del enlace y aviso a los invitados. */
+	@Autowired private InvitacionService invitacionServ;
 
 	/** Constructor por defecto. */
-	public EventoService() {
-	}
+	public EventoService() {}
 
 	/**
 	 * Cuenta el número total de eventos.
@@ -97,9 +96,9 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * Crea un nuevo evento en estado PROGRAMADO.
 	 *
 	 * @param data DTO con los datos del evento
-	 * @return 0 si la creación fue exitosa, 1 si el conjunto no existe, 2 si el
-	 *         espacio no existe o es de otro conjunto, 3 si la fecha y hora ya
-	 *         pasaron
+	 * @return 0 si la creación fue exitosa, 1 si el conjunto no existe, 2 si el espacio no existe o
+	 *     es de otro conjunto, 3 si la fecha y hora ya pasaron, 7 si el espacio ya está reservado u
+	 *     ocupado por otro evento en ese horario
 	 */
 	@Override
 	public int create(EventoDTO data) {
@@ -108,8 +107,11 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		if (resultado != 0) {
 			return resultado;
 		}
+		entity.setCodigoInvitacion(invitacionServ.nuevoCodigo());
 		eventoRepo.save(entity);
-		auditoriaServ.registrar("EVENTO", "Evento",
+		auditoriaServ.registrar(
+				"EVENTO",
+				"Evento",
 				"Creó el evento " + entity.getTitulo() + " en " + nombreConjunto(entity.getConjuntoId()));
 		return 0;
 	}
@@ -128,7 +130,7 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * Obtiene los eventos de un conjunto, o todos si no se indica conjunto.
 	 *
 	 * @param conjuntoId ID del conjunto (opcional)
-	 * @return Lista de DTOs de eventos, o null si el conjunto no existe
+	 * @return Lista de DTOs de eventos, vacía si el conjunto no existe
 	 */
 	public List<EventoDTO> getAll(Long conjuntoId) {
 		if (conjuntoId == null) {
@@ -136,27 +138,31 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		}
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(conjuntoId);
 		if (!conjunto.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
 		return aDTOs(eventoRepo.findByConjuntoIdOrderByFechaDescHoraInicioDesc(conjuntoId), null);
 	}
 
 	/**
-	 * Obtiene los eventos de hoy en adelante de un conjunto, con filtros, indicando
-	 * si el usuario asistirá.
+	 * Obtiene los eventos de hoy en adelante de un conjunto, con filtros, indicando si el usuario
+	 * asistirá.
 	 *
-	 * @param username   Correo del usuario
+	 * @param username Correo del usuario
 	 * @param conjuntoId ID del conjunto
-	 * @param tipo       Tipo de evento (opcional)
-	 * @param paraNinos  true para ver solo planes para niños
-	 * @return Lista de DTOs de eventos, o null si el conjunto no existe
+	 * @param tipo Tipo de evento (opcional)
+	 * @param paraNinos true para ver solo planes para niños
+	 * @return Lista de DTOs de eventos, vacía si el conjunto no existe
 	 */
 	public List<EventoDTO> getByConjunto(String username, Long conjuntoId, Tipo tipo, boolean paraNinos) {
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(conjuntoId);
 		if (!conjunto.isPresent()) {
-			return null;
+			return new ArrayList<>();
 		}
-		Usuario usuario = usuarioRepo.findByUsername(username).orElse(null);
+		Usuario usuario = null;
+		Optional<Usuario> encontrado = usuarioRepo.findByUsername(username);
+		if (encontrado.isPresent()) {
+			usuario = encontrado.get();
+		}
 		LocalDate hoy = LocalDate.now();
 		List<Evento> eventos = new ArrayList<>();
 		for (Evento evento : eventoRepo.findByConjuntoIdOrderByFechaAscHoraInicioAsc(conjuntoId)) {
@@ -197,7 +203,10 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		if (!found.isPresent()) {
 			return 1;
 		}
-		asistenciaRepo.deleteAll(asistenciaRepo.findByEventoId(id));
+		for (Asistencia asistencia : asistenciaRepo.findByEventoId(id)) {
+			asistenciaRepo.delete(asistencia);
+		}
+		invitacionServ.borrarInvitadosEvento(id);
 		eventoRepo.delete(found.get());
 		auditoriaServ.registrar("ELIMINAR", "Evento", "Eliminó el evento " + found.get().getTitulo());
 		return 0;
@@ -206,12 +215,12 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	/**
 	 * Actualiza un evento programado.
 	 *
-	 * @param id      ID del evento
+	 * @param id ID del evento
 	 * @param newData DTO con los nuevos datos
-	 * @return 0 si la actualización fue exitosa, 1 si el conjunto no existe, 2 si
-	 *         el espacio no existe o es de otro conjunto, 3 si la fecha y hora ya
-	 *         pasaron, 4 si el evento no existe, 5 si el evento fue cancelado o ya
-	 *         finalizó, 6 si el cupo es menor que los inscritos
+	 * @return 0 si la actualización fue exitosa, 1 si el conjunto no existe, 2 si el espacio no
+	 *     existe o es de otro conjunto, 3 si la fecha y hora ya pasaron, 4 si el evento no existe, 5
+	 *     si el evento fue cancelado o ya finalizó, 6 si el cupo es menor que los inscritos, 7 si el
+	 *     espacio ya está reservado u ocupado por otro evento en ese horario
 	 */
 	@Override
 	public int updateById(Long id, EventoDTO newData) {
@@ -236,12 +245,11 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	}
 
 	/**
-	 * Cancela un evento programado y avisa por correo a los inscritos.
+	 * Cancela un evento programado y avisa por correo a los inscritos y a los invitados.
 	 *
-	 * @param id     ID del evento
+	 * @param id ID del evento
 	 * @param motivo Motivo de la cancelación
-	 * @return 0 si se canceló, 1 si el evento no existe, 2 si ya estaba cancelado o
-	 *         finalizó
+	 * @return 0 si se canceló, 1 si el evento no existe, 2 si ya estaba cancelado o finalizó
 	 */
 	public int cancelar(Long id, String motivo) {
 		Optional<Evento> found = eventoRepo.findById(id);
@@ -259,11 +267,13 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		for (Asistencia asistencia : asistenciaRepo.findByEventoId(id)) {
 			Optional<Usuario> asistente = usuarioRepo.findById(asistencia.getUsuarioId());
 			if (asistente.isPresent()) {
-				correoServ.enviarHtml(asistente.get().getUsername(), "Evento cancelado: " + temp.getTitulo(), html);
+				correoServ.enviarHtml(
+						asistente.get().getUsername(), "Evento cancelado: " + temp.getTitulo(), html);
 			}
 		}
-		auditoriaServ.registrar("EVENTO", "Evento",
-				"Canceló el evento " + temp.getTitulo() + ": " + temp.getMotivoCancelacion());
+		invitacionServ.avisarCancelacionEvento(temp);
+		auditoriaServ.registrar(
+				"EVENTO", "Evento", "Canceló el evento " + temp.getTitulo() + ": " + temp.getMotivoCancelacion());
 		return 0;
 	}
 
@@ -271,10 +281,9 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * Inscribe al residente con la sesión iniciada en un evento de su conjunto.
 	 *
 	 * @param username Correo del residente
-	 * @param id       ID del evento
-	 * @return 0 si quedó inscrito, 1 si el evento no existe, 2 si fue cancelado o
-	 *         finalizó, 3 si el usuario no es residente del conjunto, 4 si el cupo
-	 *         está lleno, 5 si ya estaba inscrito
+	 * @param id ID del evento
+	 * @return 0 si quedó inscrito, 1 si el evento no existe, 2 si fue cancelado o finalizó, 3 si el
+	 *     usuario no es residente del conjunto, 4 si el cupo está lleno, 5 si ya estaba inscrito
 	 */
 	public int asistir(String username, Long id) {
 		Optional<Evento> found = eventoRepo.findById(id);
@@ -304,9 +313,9 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * Cancela la asistencia del residente con la sesión iniciada a un evento.
 	 *
 	 * @param username Correo del residente
-	 * @param id       ID del evento
-	 * @return 0 si se canceló la asistencia, 1 si el evento no existe, 2 si fue
-	 *         cancelado o finalizó, 3 si el usuario no es residente del conjunto
+	 * @param id ID del evento
+	 * @return 0 si se canceló la asistencia, 1 si el evento no existe, 2 si fue cancelado o
+	 *     finalizó, 3 si el usuario no es residente del conjunto
 	 */
 	public int noAsistir(String username, Long id) {
 		Optional<Evento> found = eventoRepo.findById(id);
@@ -327,41 +336,6 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		}
 		auditoriaServ.registrar(username, "EVENTO", "Evento", "Canceló su asistencia a " + temp.getTitulo());
 		return 0;
-	}
-
-	/**
-	 * Envía la invitación del evento, con su plantilla, a todos los residentes
-	 * activos del conjunto.
-	 *
-	 * @param id ID del evento
-	 * @return Número de correos enviados (0 o más), -1 si el evento no existe, -2
-	 *         si fue cancelado o finalizó, -3 si el conjunto no tiene residentes
-	 *         activos
-	 */
-	public int enviarInvitacion(Long id) {
-		Optional<Evento> found = eventoRepo.findById(id);
-		if (!found.isPresent()) {
-			return -1;
-		}
-		Evento temp = found.get();
-		if (temp.getEstadoActual() != Estado.PROGRAMADO) {
-			return -2;
-		}
-		List<Usuario> residentes = usuarioRepo
-				.findByConjuntoIdAndUnidadIdIsNotNullAndActivoTrueAndVerificadoTrue(temp.getConjuntoId());
-		if (residentes.isEmpty()) {
-			return -3;
-		}
-		String html = plantillaServ.invitacion(temp);
-		int enviados = 0;
-		for (Usuario residente : residentes) {
-			if (correoServ.enviarHtml(residente.getUsername(), "Invitación: " + temp.getTitulo(), html)) {
-				enviados++;
-			}
-		}
-		auditoriaServ.registrar("EVENTO", "Evento",
-				"Envió la invitación de " + temp.getTitulo() + " a " + enviados + " residente(s)");
-		return enviados;
 	}
 
 	/**
@@ -393,8 +367,7 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	}
 
 	/**
-	 * Obtiene los eventos programados de un conjunto, del más próximo al más
-	 * lejano.
+	 * Obtiene los eventos programados de un conjunto, del más próximo al más lejano.
 	 *
 	 * @param conjuntoId ID del conjunto
 	 * @return Lista de eventos programados
@@ -421,10 +394,10 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	}
 
 	/**
-	 * Convierte un evento en DTO con los nombres del conjunto y el espacio, el
-	 * total de asistentes, su estado actual y si el usuario asistirá.
+	 * Convierte un evento en DTO con los nombres del conjunto y el espacio, el total de asistentes,
+	 * su estado actual y si el usuario asistirá.
 	 *
-	 * @param evento  Evento a convertir
+	 * @param evento Evento a convertir
 	 * @param usuario Usuario actual, o null
 	 * @return DTO del evento
 	 */
@@ -436,8 +409,9 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 		dto.setConjuntoNombre(nombreConjunto(evento.getConjuntoId()));
 		dto.setEspacioNombre(nombreEspacio(evento.getEspacioId()));
 		dto.setTotalAsistentes((int) asistenciaRepo.countByEventoId(evento.getId()));
-		dto.setAsistire(usuario != null
-				&& asistenciaRepo.findByEventoIdAndUsuarioId(evento.getId(), usuario.getId()).isPresent());
+		dto.setAsistire(
+				usuario != null
+						&& asistenciaRepo.findByEventoIdAndUsuarioId(evento.getId(), usuario.getId()).isPresent());
 		dto.setEstado(evento.getEstadoActual());
 		return dto;
 	}
@@ -459,7 +433,7 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	 * Busca al usuario y revisa que sea residente del conjunto del evento.
 	 *
 	 * @param username Correo del usuario
-	 * @param evento   Evento
+	 * @param evento Evento
 	 * @return El usuario, o null si no es residente del conjunto
 	 */
 	private Usuario residenteDelEvento(String username, Evento evento) {
@@ -475,14 +449,12 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	}
 
 	/**
-	 * Copia los datos del DTO en la entidad y revisa el conjunto, el espacio y la
-	 * fecha.
+	 * Copia los datos del DTO en la entidad y revisa el conjunto, el espacio y la fecha.
 	 *
 	 * @param entity Evento a modificar
-	 * @param data   Datos nuevos
-	 * @return 0 si los datos son válidos, 1 si el conjunto no existe, 2 si el
-	 *         espacio no existe o es de otro conjunto, 3 si la fecha y hora ya
-	 *         pasaron
+	 * @param data Datos nuevos
+	 * @return 0 si los datos son válidos, 1 si el conjunto no existe, 2 si el espacio no existe o es
+	 *     de otro conjunto, 3 si la fecha y hora ya pasaron, 7 si el espacio ya está ocupado
 	 */
 	private int aplicar(Evento entity, EventoDTO data) {
 		Optional<Conjunto> conjunto = conjuntoRepo.findById(data.getConjuntoId());
@@ -498,11 +470,19 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 			espacio = found.get();
 		}
 		LocalDate fecha = FechaUtil.leerFecha(data.getFecha());
-		if (!LocalDateTime.of(fecha, FechaUtil.leerHora(data.getHoraInicio())).isAfter(LocalDateTime.now())) {
+		LocalTime inicio = FechaUtil.leerHora(data.getHoraInicio());
+		LocalTime fin = FechaUtil.leerHora(data.getHoraFin());
+		if (!LocalDateTime.of(fecha, inicio).isAfter(LocalDateTime.now())) {
 			return 3;
 		}
+		if (espacio != null && espacioOcupado(entity.getId(), espacio.getId(), fecha, inicio, fin)) {
+			return 7;
+		}
 		entity.setConjuntoId(conjunto.get().getId());
-		entity.setEspacioId(espacio == null ? null : espacio.getId());
+		entity.setEspacioId(null);
+		if (espacio != null) {
+			entity.setEspacioId(espacio.getId());
+		}
 		entity.setTitulo(TextoUtil.limpiar(data.getTitulo()));
 		entity.setDescripcion(TextoUtil.limpiar(data.getDescripcion()));
 		entity.setTipo(data.getTipo());
@@ -516,6 +496,32 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 	}
 
 	/**
+	 * Indica si un espacio ya está ocupado en un horario por una reserva pendiente o aprobada, o por
+	 * otro evento programado.
+	 *
+	 * @param eventoId ID del evento que se revisa (null si es nuevo), para no compararlo consigo mismo
+	 * @param espacioId ID del espacio
+	 * @param fecha Día del evento
+	 * @param inicio Hora de inicio
+	 * @param fin Hora de fin
+	 * @return true si el espacio está ocupado
+	 */
+	private boolean espacioOcupado(Long eventoId, Long espacioId, LocalDate fecha, LocalTime inicio, LocalTime fin) {
+		for (Reserva reserva : reservaRepo.findByEspacioIdAndFecha(espacioId, fecha)) {
+			if (reserva.estaActiva() && reserva.seCruzaCon(inicio, fin)) {
+				return true;
+			}
+		}
+		for (Evento otro : eventoRepo.findByEspacioIdAndFecha(espacioId, fecha)) {
+			boolean esElMismo = eventoId != null && eventoId.equals(otro.getId());
+			if (!esElMismo && otro.getEstadoActual() == Estado.PROGRAMADO && otro.seCruzaCon(inicio, fin)) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	/**
 	 * Busca el nombre de un conjunto por su identificador.
 	 *
 	 * @param id Identificador a buscar (puede ser null)
@@ -526,7 +532,10 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 			return null;
 		}
 		Optional<Conjunto> found = conjuntoRepo.findById(id);
-		return found.isPresent() ? found.get().getNombre() : null;
+		if (found.isPresent()) {
+			return found.get().getNombre();
+		}
+		return null;
 	}
 
 	/**
@@ -540,6 +549,9 @@ public class EventoService implements CRUDOperation<EventoDTO> {
 			return null;
 		}
 		Optional<Espacio> found = espacioRepo.findById(id);
-		return found.isPresent() ? found.get().getNombre() : null;
+		if (found.isPresent()) {
+			return found.get().getNombre();
+		}
+		return null;
 	}
 }
