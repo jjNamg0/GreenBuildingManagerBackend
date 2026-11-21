@@ -111,7 +111,7 @@ public class ExceptionChecker {
 	 */
 	public static boolean dominioPermitido(String correo) {
 		String limpio = correo.trim().toLowerCase();
-		String dominio = limpio.substring(limpio.indexOf("@") + 1);
+		String dominio = limpio.substring(limpio.indexOf('@') + 1);
 		return DOMINIOS_PERMITIDOS.contains(dominio);
 	}
 
